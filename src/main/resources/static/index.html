@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FitCoach AI - Твой персональный фитнес-помощник</title>
+    <link rel="stylesheet" href="css/style.css">
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <div class="logo">
+                    <span class="logo-icon">🤖</span>
+                    <span class="logo-text">FitCoach AI</span>
+                </div>
+                <div class="user-info">
+                    <span class="user-name" id="userName">Loading...</span>
+                    <span class="user-status" id="userStatus">Student</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Navigation -->
+        <nav class="nav-tabs">
+            <button class="nav-tab active" data-tab="dashboard">
+                <span class="tab-icon">📊</span>
+                <span class="tab-text">Дашборд</span>
+            </button>
+            <button class="nav-tab" data-tab="nutrition">
+                <span class="tab-icon">🍎</span>
+                <span class="tab-text">Питание</span>
+            </button>
+            <button class="nav-tab" data-tab="progress">
+                <span class="tab-icon">📈</span>
+                <span class="tab-text">Прогресс</span>
+            </button>
+            <button class="nav-tab" data-tab="profile">
+                <span class="tab-icon">👤</span>
+                <span class="tab-text">Профиль</span>
+            </button>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            
+            <!-- Dashboard Tab -->
+            <div class="tab-content active" id="dashboard">
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon">🔥</div>
+                        <div class="stat-info">
+                            <div class="stat-value" id="todayCalories">0</div>
+                            <div class="stat-label">Калории сегодня</div>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon">⚖️</div>
+                        <div class="stat-info">
+                            <div class="stat-value" id="currentWeight">--</div>
+                            <div class="stat-label">Текущий вес</div>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon">🎯</div>
+                        <div class="stat-info">
+                            <div class="stat-value" id="dailyGoal">2000</div>
+                            <div class="stat-label">Цель калорий</div>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon">📅</div>
+                        <div class="stat-info">
+                            <div class="stat-value" id="streakDays">1</div>
+                            <div class="stat-label">Дней подряд</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="progress-chart">
+                    <h3>Прогресс за неделю</h3>
+                    <div class="chart-container">
+                        <canvas id="weeklyChart" width="350" height="200"></canvas>
+                    </div>
+                </div>
+
+                <div class="quick-actions">
+                    <h3>Быстрые действия</h3>
+                    <div class="action-buttons">
+                        <button class="action-btn" onclick="addFood()">
+                            <span>📸</span>
+                            Добавить еду
+                        </button>
+                        <button class="action-btn" onclick="addWeight()">
+                            <span>⚖️</span>
+                            Записать вес
+                        </button>
+                        <button class="action-btn" onclick="addWorkout()">
+                            <span>💪</span>
+                            Тренировка
+                        </button>
+                        <button class="action-btn" onclick="aiChat()">
+                            <span>🤖</span>
+                            AI Помощник
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Nutrition Tab -->
+            <div class="tab-content" id="nutrition">
+                <div class="nutrition-header">
+                    <h2>Питание сегодня</h2>
+                    <div class="calories-summary">
+                        <div class="calories-consumed">
+                            <span class="value" id="consumedCalories">0</span>
+                            <span class="label">Потреблено</span>
+                        </div>
+                        <div class="calories-remaining">
+                            <span class="value" id="remainingCalories">2000</span>
+                            <span class="label">Осталось</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="meals-list" id="mealsList">
+                    <div class="empty-state">
+                        <span class="empty-icon">🍽️</span>
+                        <p>Пока нет записей о питании</p>
+                        <button class="btn-primary" onclick="addFood()">Добавить первый прием пищи</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Progress Tab -->
+            <div class="tab-content" id="progress">
+                <div class="progress-header">
+                    <h2>Ваш прогресс</h2>
+                    <div class="progress-period">
+                        <button class="period-btn active" data-period="week">Неделя</button>
+                        <button class="period-btn" data-period="month">Месяц</button>
+                        <button class="period-btn" data-period="year">Год</button>
+                    </div>
+                </div>
+
+                <div class="progress-charts">
+                    <div class="chart-card">
+                        <h3>Изменение веса</h3>
+                        <canvas id="weightChart" width="350" height="200"></canvas>
+                    </div>
+                    
+                    <div class="chart-card">
+                        <h3>Калории по дням</h3>
+                        <canvas id="caloriesChart" width="350" height="200"></canvas>
+                    </div>
+                </div>
+
+                <div class="achievements">
+                    <h3>Достижения</h3>
+                    <div class="achievement-list">
+                        <div class="achievement-item locked">
+                            <span class="achievement-icon">🏆</span>
+                            <div class="achievement-info">
+                                <div class="achievement-title">Первая неделя</div>
+                                <div class="achievement-desc">Ведите дневник 7 дней подряд</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Profile Tab -->
+            <div class="tab-content" id="profile">
+                <div class="profile-header">
+                    <div class="profile-avatar">
+                        <span class="avatar-text" id="avatarText">НД</span>
+                    </div>
+                    <div class="profile-info">
+                        <h2 id="profileName">Никита Дудко</h2>
+                        <p id="profileRole">Студент</p>
+                    </div>
+                </div>
+
+                <div class="profile-stats">
+                    <div class="profile-stat">
+                        <span class="stat-number" id="totalDays">1</span>
+                        <span class="stat-text">Дней в приложении</span>
+                    </div>
+                    <div class="profile-stat">
+                        <span class="stat-number" id="totalMeals">0</span>
+                        <span class="stat-text">Приемов пищи</span>
+                    </div>
+                    <div class="profile-stat">
+                        <span class="stat-number" id="totalWorkouts">0</span>
+                        <span class="stat-text">Тренировок</span>
+                    </div>
+                </div>
+
+                <div class="profile-actions">
+                    <button class="profile-btn" onclick="editProfile()">
+                        <span>✏️</span>
+                        Редактировать профиль
+                    </button>
+                    <button class="profile-btn" onclick="becomeCoach()">
+                        <span>🏆</span>
+                        Стать тренером
+                    </button>
+                    <button class="profile-btn" onclick="shareApp()">
+                        <span>📤</span>
+                        Поделиться приложением
+                    </button>
+                    <button class="profile-btn danger" onclick="logout()">
+                        <span>🚪</span>
+                        Выйти
+                    </button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="spinner"></div>
+        <p>Загрузка...</p>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/app.js"></script>
+</body>
+</html> 
