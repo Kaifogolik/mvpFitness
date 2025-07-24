@@ -36,7 +36,7 @@ openai:
 # App Configuration
 app:
   mini-app:
-    url: ${MINI_APP_URL:https://t.me/fitcoach_ai_bot/app}
+    url: ${MINI_APP_URL:http://localhost:8080}
 
 logging:
   level:
