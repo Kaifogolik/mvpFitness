@@ -1,0 +1,92 @@
+spring:
+  application:
+    name: fitcoach-platform
+  
+  profiles:
+    active: development
+    
+  datasource:
+    url: jdbc:postgresql://localhost:5432/fitness_app
+    username: fitness_user
+    password: fitness_pass
+    driver-class-name: org.postgresql.Driver
+    
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+        
+  redis:
+    host: localhost
+    port: 6379
+    password: 
+    timeout: 2000ms
+    
+  security:
+    jwt:
+      secret: ${JWT_SECRET:your-256-bit-secret-key-here-change-in-production}
+      expiration: 86400000 # 24 hours
+
+# Telegram Bot Configuration
+telegram:
+  bot:
+    token: ${TELEGRAM_BOT_TOKEN:}
+    username: ${TELEGRAM_BOT_USERNAME:}
+    webhook-url: ${TELEGRAM_WEBHOOK_URL:}
+
+# OpenAI Configuration  
+openai:
+  api-key: ${OPENAI_API_KEY:}
+  model: gpt-4-vision-preview
+  max-tokens: 1000
+  temperature: 0.3
+
+# Application Configuration
+app:
+  cors:
+    allowed-origins: "*"
+    allowed-methods: "*"
+    allowed-headers: "*"
+  
+  features:
+    mini-app: true
+    push-notifications: false
+    offline-mode: false
+    ai-analysis: true
+    
+  file-upload:
+    max-size: 10MB
+    allowed-types: image/jpeg,image/png,image/webp
+
+# Management & Monitoring
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: always
+      
+# Logging
+logging:
+  level:
+    com.fitcoach: DEBUG
+    org.springframework.security: DEBUG
+    org.telegram: INFO
+    org.hibernate.SQL: ERROR
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+
+# API Documentation
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    operationsSorter: method 
