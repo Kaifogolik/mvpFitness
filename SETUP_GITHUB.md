@@ -8,8 +8,8 @@
 2. Нажмите **"New"** или **"+"** → **"New repository"**
 3. Заполните форму:
    ```
-   Repository name: fitcoach-ai-platform
-   Description: 🤖 Умная фитнес-платформа с ИИ-анализом питания и системой тренер-ученик
+       Repository name: mvpFitness
+    Description: 🤖 Умная фитнес-платформа с ИИ-анализом питания и системой тренер-ученик
    Visibility: Public (или Private)
    ✅ Initialize this repository with: НЕ ВЫБИРАЙТЕ (у нас уже есть файлы)
    ```
@@ -21,7 +21,7 @@
 
 ```bash
 # Добавляем удаленный репозиторий
-git remote add origin https://github.com/Kaifogolik/fitcoach-ai-platform.git
+git remote add origin https://github.com/Kaifogolik/mvpFitness.git
 
 # Устанавливаем основную ветку
 git branch -M main
