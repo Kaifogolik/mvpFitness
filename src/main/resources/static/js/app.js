@@ -291,26 +291,250 @@ class FitCoachApp {
             this.hideLoading();
         }
     }
-}
 
-// Глобальные функции для HTML
-window.addFood = function() {
-    app.showLoading();
-    
-    // Имитация добавления еды
-    setTimeout(() => {
-        app.hideLoading();
-        app.showSuccess('Функция добавления еды будет доступна после интеграции с OpenAI API');
+    // AI функции для Mini App
+    async analyzePhotoFromGallery() {
+        try {
+            // Создаем скрытый input для выбора файла
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = 'image/*';
+            input.style.display = 'none';
+            
+            return new Promise((resolve, reject) => {
+                input.onchange = async (event) => {
+                    const file = event.target.files[0];
+                    if (!file) {
+                        reject(new Error('Файл не выбран'));
+                        return;
+                    }
+                    
+                    this.showLoading();
+                    
+                    try {
+                        // Конвертируем в base64
+                        const base64 = await this.fileToBase64(file);
+                        
+                        // Отправляем на анализ
+                        const analysis = await this.apiCall('/api/ai/analyze-food-base64', 'POST', {
+                            imageBase64: base64.split(',')[1], // Убираем data:image/jpeg;base64,
+                            mealType: 'OTHER'
+                        });
+                        
+                        if (analysis.success) {
+                            this.showFoodAnalysisResult(analysis);
+                            resolve(analysis);
+                        } else {
+                            throw new Error(analysis.message || 'Ошибка анализа');
+                        }
+                        
+                    } catch (error) {
+                        console.error('Ошибка анализа фото:', error);
+                        this.showError('Не удалось проанализировать фото. Попробуйте через Telegram бота.');
+                        reject(error);
+                    } finally {
+                        this.hideLoading();
+                    }
+                };
+                
+                // Запускаем выбор файла
+                input.click();
+            });
+            
+        } catch (error) {
+            console.error('Ошибка выбора фото:', error);
+            this.showError('Ошибка доступа к галерее');
+        }
+    }
+
+    fileToBase64(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = error => reject(error);
+        });
+    }
+
+    showFoodAnalysisResult(analysis) {
+        const foods = analysis.detectedFoods || [];
+        const totalCalories = analysis.totalCalories || 0;
         
-        // Обновляем калории (демо)
+        let message = `🍽️ АНАЛИЗ ПИТАНИЯ\n\n`;
+        message += `📊 Общие калории: ${totalCalories} ккал\n`;
+        message += `🥄 Общие БЖУ: Б${analysis.totalProteins || 0}г, Ж${analysis.totalFats || 0}г, У${analysis.totalCarbs || 0}г\n\n`;
+        
+        if (foods.length > 0) {
+            message += `🍎 ОБНАРУЖЕННЫЕ ПРОДУКТЫ:\n`;
+            foods.forEach((food, index) => {
+                message += `${index + 1}. ${food.name}\n`;
+                message += `   Калории: ${food.calories} ккал\n`;
+                message += `   БЖУ: Б${food.proteins}г, Ж${food.fats}г, У${food.carbs}г\n\n`;
+            });
+        }
+        
+        if (analysis.recommendations) {
+            message += `💡 РЕКОМЕНДАЦИИ:\n${analysis.recommendations}`;
+        }
+        
+        // Показываем результат
+        if (this.tg.showAlert) {
+            this.tg.showAlert(message);
+        } else {
+            alert(message);
+        }
+        
+        // Обновляем калории на дашборде (демо)
         const currentCalories = parseInt(document.getElementById('todayCalories').textContent) || 0;
-        const newCalories = currentCalories + Math.floor(Math.random() * 300) + 100;
+        const newCalories = currentCalories + totalCalories;
         document.getElementById('todayCalories').textContent = newCalories;
         document.getElementById('consumedCalories').textContent = newCalories;
         
-        const remaining = Math.max(0, 2000 - newCalories);
+        const dailyGoal = parseInt(document.getElementById('dailyGoal').textContent) || 2000;
+        const remaining = Math.max(0, dailyGoal - newCalories);
         document.getElementById('remainingCalories').textContent = remaining;
-    }, 1000);
+    }
+
+    async askAIQuestion(question = null) {
+        try {
+            // Если вопрос не передан, спрашиваем у пользователя
+            let userQuestion = question;
+            if (!userQuestion) {
+                if (this.tg.showPopup) {
+                    // Используем Telegram WebApp popup
+                    return new Promise((resolve) => {
+                        this.tg.showPopup({
+                            title: '🤖 AI Помощник',
+                            message: 'Задайте вопрос о питании, тренировках или здоровье:',
+                            buttons: [
+                                {id: 'nutrition', type: 'default', text: '🍎 О питании'},
+                                {id: 'workout', type: 'default', text: '💪 О тренировках'},
+                                {id: 'custom', type: 'default', text: '✍️ Свой вопрос'},
+                                {id: 'cancel', type: 'cancel', text: 'Отмена'}
+                            ]
+                        }, (buttonId) => {
+                            if (buttonId === 'nutrition') {
+                                this.askAIQuestion('Дай совет по здоровому питанию для поддержания формы');
+                            } else if (buttonId === 'workout') {
+                                this.askAIQuestion('Какие упражнения лучше делать для общей физической формы?');
+                            } else if (buttonId === 'custom') {
+                                const customQuestion = prompt('🤖 Задайте ваш вопрос:');
+                                if (customQuestion) {
+                                    this.askAIQuestion(customQuestion);
+                                }
+                            }
+                            resolve();
+                        });
+                    });
+                } else {
+                    // Fallback для обычных браузеров
+                    userQuestion = prompt('🤖 Задайте вопрос AI помощнику:');
+                    if (!userQuestion) return;
+                }
+            }
+            
+            this.showLoading();
+            
+            // Отправляем вопрос AI
+            const response = await this.apiCall('/api/ai/chat', 'POST', {
+                message: userQuestion,
+                userId: this.currentUser?.id || 'webapp_user'
+            });
+            
+            this.hideLoading();
+            
+            if (response.success) {
+                // Показываем ответ AI
+                const aiMessage = `🤖 AI ПОМОЩНИК\n\n❓ Ваш вопрос:\n${userQuestion}\n\n💡 Ответ:\n${response.response}`;
+                
+                if (this.tg.showAlert) {
+                    this.tg.showAlert(aiMessage);
+                } else {
+                    alert(aiMessage);
+                }
+            } else {
+                throw new Error(response.message || 'Ошибка AI чата');
+            }
+            
+        } catch (error) {
+            this.hideLoading();
+            console.error('AI Chat Error:', error);
+            this.showError('Не удалось получить ответ от AI. Попробуйте через Telegram бота.');
+        }
+    }
+}
+
+// Глобальные функции для HTML
+window.addFood = async function() {
+    app.showLoading();
+    
+    try {
+        // Проверяем доступность AI API
+        const aiStatus = await app.apiCall('/api/ai/status');
+        
+        if (!aiStatus.success || !aiStatus.features.food_analysis) {
+            app.hideLoading();
+            app.showError('AI анализ питания временно недоступен');
+            return;
+        }
+        
+        app.hideLoading();
+        
+        // Предлагаем выбор способа анализа
+        if (app.tg.showConfirm) {
+            app.tg.showConfirm(
+                '📸 Как добавить анализ питания?\n\n🖼️ Из галереи - анализ прямо здесь\n🤖 Через бота - отправить фото в @mvpfitness_bot\n\nВыбрать "Из галереи"?',
+                async (useGallery) => {
+                    if (useGallery) {
+                        // Анализ из галереи
+                        try {
+                            await app.analyzePhotoFromGallery();
+                        } catch (error) {
+                            console.error('Gallery analysis error:', error);
+                        }
+                    } else {
+                        // Переход к Telegram боту
+                        app.tg.showAlert(`
+📸 Анализ через Telegram бота
+
+1. Откройте @mvpfitness_bot
+2. Нажмите "📸 Анализ еды"
+3. Сфотографируйте блюдо
+4. Получите детальный анализ калорий и БЖУ
+
+Результат появится здесь автоматически!
+                        `);
+                        
+                        if (app.tg.openTelegramLink) {
+                            app.tg.openTelegramLink('https://t.me/mvpfitness_bot?start=photo');
+                        }
+                    }
+                }
+            );
+        } else {
+            // Fallback для браузеров без Telegram WebApp
+            const useGallery = confirm('📸 Анализировать фото из галереи? (Нет = через Telegram бота)');
+            
+            if (useGallery) {
+                try {
+                    await app.analyzePhotoFromGallery();
+                } catch (error) {
+                    console.error('Gallery analysis error:', error);
+                }
+            } else {
+                alert('Перейдите к @mvpfitness_bot для анализа фото');
+                window.open('https://t.me/mvpfitness_bot', '_blank');
+            }
+        }
+        
+        // Переключаемся на вкладку питания
+        document.querySelector('[data-tab="nutrition"]').click();
+        
+    } catch (error) {
+        app.hideLoading();
+        app.showError('Ошибка подключения к AI сервису');
+        console.error('AI API Error:', error);
+    }
 };
 
 window.addWeight = function() {
@@ -332,8 +556,76 @@ window.addWorkout = function() {
     }
 };
 
-window.aiChat = function() {
-    app.showSuccess('AI Помощник будет доступен после интеграции с OpenAI GPT-4');
+window.aiChat = async function() {
+    app.showLoading();
+    
+    try {
+        // Проверяем доступность AI чата
+        const aiStatus = await app.apiCall('/api/ai/status');
+        
+        if (!aiStatus.success || !aiStatus.features.ai_chat) {
+            app.hideLoading();
+            app.showError('AI чат временно недоступен');
+            return;
+        }
+        
+        app.hideLoading();
+        
+        // Предлагаем выбор способа чата
+        if (app.tg.showConfirm) {
+            app.tg.showConfirm(
+                '🤖 Как пообщаться с AI помощником?\n\n💬 Здесь - быстрый вопрос прямо в приложении\n📱 Через бота - полноценный чат в @mvpfitness_bot\n\nВыбрать "Здесь"?',
+                async (chatHere) => {
+                    if (chatHere) {
+                        // Чат прямо в Mini App
+                        try {
+                            await app.askAIQuestion();
+                        } catch (error) {
+                            console.error('Mini App chat error:', error);
+                        }
+                    } else {
+                        // Переход к Telegram боту
+                        app.tg.showAlert(`
+🤖 AI Чат через Telegram бота
+
+1. Откройте @mvpfitness_bot
+2. Нажмите "🤖 AI Чат" или просто напишите вопрос
+3. Получите экспертный совет по:
+   • Питанию и диетам
+   • Тренировкам  
+   • Здоровому образу жизни
+   • Анализу калорий
+
+Полноценный чат с историей сообщений!
+                        `);
+                        
+                        if (app.tg.openTelegramLink) {
+                            app.tg.openTelegramLink('https://t.me/mvpfitness_bot?start=chat');
+                        }
+                    }
+                }
+            );
+        } else {
+            // Fallback для браузеров без Telegram WebApp
+            const chatHere = confirm('🤖 Задать вопрос здесь? (Нет = перейти к Telegram боту)');
+            
+            if (chatHere) {
+                try {
+                    await app.askAIQuestion();
+                } catch (error) {
+                    console.error('Mini App chat error:', error);
+                }
+            } else {
+                alert('Перейдите к @mvpfitness_bot для полноценного AI чата');
+                window.open('https://t.me/mvpfitness_bot', '_blank');
+            }
+        }
+        
+    } catch (error) {
+        app.hideLoading();
+        app.showError('Ошибка подключения к AI чату');
+        console.error('AI Chat Error:', error);
+    }
 };
 
 window.editProfile = function() {

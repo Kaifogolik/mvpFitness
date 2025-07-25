@@ -26,12 +26,12 @@ telegram:
     username: ${TELEGRAM_BOT_USERNAME:fitcoach_ai_bot}
     webhook-url: ${TELEGRAM_WEBHOOK_URL:}
 
-# OpenAI Configuration (заменить на реальный ключ)
+# OpenAI Configuration (НАСТРОЕН С РЕАЛЬНЫМ КЛЮЧОМ!)
 openai:
-  api-key: ${OPENAI_API_KEY:demo-key}
-  model: gpt-4-vision-preview
-  max-tokens: 1000
-  temperature: 0.3
+  api-key: ${OPENAI_API_KEY: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}
+  model: gpt-4o  # Проверенная модель + оптимизации токенов
+  max-tokens: 150     # Минимальный ответ для экономии (было 800!)
+  temperature: 0.0    # Максимальная точность
 
 # App Configuration
 app:

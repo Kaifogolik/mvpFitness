@@ -92,19 +92,19 @@
                 <div class="quick-actions">
                     <h3>Быстрые действия</h3>
                     <div class="action-buttons">
-                        <button class="action-btn" onclick="addFood()">
+                        <button class="action-btn" onclick="addFood()" id="addFoodBtn">
                             <span>📸</span>
                             Добавить еду
                         </button>
-                        <button class="action-btn" onclick="addWeight()">
+                        <button class="action-btn" onclick="addWeight()" id="addWeightBtn">
                             <span>⚖️</span>
                             Записать вес
                         </button>
-                        <button class="action-btn" onclick="addWorkout()">
+                        <button class="action-btn" onclick="addWorkout()" id="addWorkoutBtn">
                             <span>💪</span>
                             Тренировка
                         </button>
-                        <button class="action-btn" onclick="aiChat()">
+                        <button class="action-btn" onclick="aiChat()" id="aiChatBtn">
                             <span>🤖</span>
                             AI Помощник
                         </button>
@@ -230,6 +230,112 @@
     </div>
 
     <!-- Scripts -->
-    <script src="js/app.js"></script>
+    <script src="js/app.js?v=2.0"></script>
+    <script>
+        // Простая отладка для проверки загрузки функций
+        window.addEventListener('load', function() {
+            console.log('🚀 Mini App загружен');
+            console.log('📋 Доступные функции:', {
+                addFood: typeof window.addFood,
+                addWeight: typeof window.addWeight,
+                aiChat: typeof window.aiChat,
+                app: typeof window.app
+            });
+        });
+
+        // Fallback функции на случай проблем с основным JavaScript
+        window.fallbackAddFood = function() {
+            alert('📸 Анализ питания\n\nДля анализа фото еды:\n1. Откройте @mvpfitness_bot\n2. Отправьте фото блюда\n3. Получите анализ калорий');
+            try {
+                window.open('https://t.me/mvpfitness_bot', '_blank');
+            } catch(e) {
+                console.log('Не удалось открыть Telegram');
+            }
+        };
+
+        window.fallbackAiChat = function() {
+            alert('🤖 AI Помощник\n\nДля чата с AI:\n1. Откройте @mvpfitness_bot\n2. Напишите любой вопрос\n3. Получите экспертный совет');
+            try {
+                window.open('https://t.me/mvpfitness_bot', '_blank');
+            } catch(e) {
+                console.log('Не удалось открыть Telegram');
+            }
+        };
+
+        // Проверяем функции через 3 секунды и заменяем на fallback если нужно
+        setTimeout(function() {
+            if (typeof window.addFood !== 'function') {
+                console.log('⚠️ Основная функция addFood не загружена, использую fallback');
+                window.addFood = window.fallbackAddFood;
+            }
+            if (typeof window.aiChat !== 'function') {
+                console.log('⚠️ Основная функция aiChat не загружена, использую fallback');
+                window.aiChat = window.fallbackAiChat;
+            }
+        }, 3000);
+
+        // Простые тестовые функции для проверки
+        window.testAddFood = function() {
+            console.log('🧪 Test addFood clicked');
+            
+            // Проверяем AI API
+            fetch('/api/ai/status')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('✅ AI API работает!\n\nДля анализа фото:\n1. Откройте @mvpfitness_bot\n2. Отправьте фото блюда\n3. Получите анализ калорий');
+                        try {
+                            window.open('https://t.me/mvpfitness_bot', '_blank');
+                        } catch(e) {
+                            console.log('Не удалось открыть Telegram');
+                        }
+                    } else {
+                        alert('❌ AI API недоступен');
+                    }
+                })
+                .catch(error => {
+                    console.error('API Error:', error);
+                    alert('❌ Ошибка подключения к API');
+                });
+        };
+
+        window.testAiChat = function() {
+            console.log('🧪 Test aiChat clicked');
+            
+            const question = prompt('🤖 Задайте вопрос AI помощнику:');
+            if (!question) return;
+            
+            // Отправляем вопрос напрямую к API
+            fetch('/api/ai/chat', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    message: question,
+                    userId: 'test_user'
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('🤖 AI ОТВЕТ:\n\n' + data.response);
+                } else {
+                    alert('❌ Ошибка AI: ' + (data.message || 'Неизвестная ошибка'));
+                }
+            })
+            .catch(error => {
+                console.error('AI Chat Error:', error);
+                alert('❌ Не удалось связаться с AI');
+            });
+        };
+
+        // Переназначаем функции для тестирования
+        setTimeout(function() {
+            console.log('🔧 Переназначаю функции на тестовые версии');
+            window.addFood = window.testAddFood;
+            window.aiChat = window.testAiChat;
+        }, 1000);
+    </script>
 </body>
 </html> 
