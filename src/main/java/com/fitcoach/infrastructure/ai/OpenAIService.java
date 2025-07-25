@@ -24,7 +24,9 @@ import java.io.IOException;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Сервис для работы с OpenAI API
@@ -40,32 +42,17 @@ public class OpenAIService {
     private final ImageProcessor imageProcessor;
     private final String apiKey;
     
-    // Универсальный промпт для любой кухни мира (v4.0)
+    // Точный русский промпт для OpenAI (v7.0)
     private static final String NUTRITION_ANALYSIS_PROMPT = """
-        Ты эксперт по питанию. Проанализируй фото еды и верни точный JSON:
+        Ты эксперт по питанию. Внимательно проанализируй фото еды и дай точную оценку калорийности.
         
-        {
-          "detected_foods": [
-            {
-              "food_name": "точное название блюда",
-              "quantity": "размер порции",
-              "calories": калории_числом,
-              "proteins": белки_в_граммах,
-              "fats": жиры_в_граммах,
-              "carbs": углеводы_в_граммах,
-              "confidence": уверенность_0_до_1
-            }
-          ],
-          "total_calories": общие_калории,
-          "total_proteins": общие_белки_г,
-          "total_fats": общие_жиры_г,
-          "total_carbs": общие_углеводы_г,
-          "confidence_level": общая_уверенность,
-          "analysis_notes": "что видишь на фото",
-          "health_recommendations": ["практичный совет"]
-        }
+        Если видишь еду, отвечай JSON:
+        {"detected_foods":[{"food_name":"точное название","quantity":"размер","calories":реальное_число,"proteins":граммы,"fats":граммы,"carbs":граммы,"confidence":0.9}],"total_calories":точные_калории,"total_proteins":граммы,"total_fats":граммы,"total_carbs":граммы,"confidence_level":0.9,"analysis_notes":"что вижу на фото","health_recommendations":["совет"]}
         
-        ВАЖНО: определи реальный размер порции, любую кухню мира, будь максимально точным. ТОЛЬКО JSON!
+        Если еды не видно:
+        {"total_calories":0,"total_proteins":0,"total_fats":0,"total_carbs":0,"confidence_level":0,"analysis_notes":"Не могу четко определить еду на изображении","health_recommendations":["Загрузите более четкое фото"]}
+        
+        ВАЖНО: Используй реальные калории из базы данных, не завышай. ТОЛЬКО JSON без пояснений!
         """;
 
     public OpenAIService(@Value("${openai.api-key}") String apiKey, ImageProcessor imageProcessor) {
@@ -124,6 +111,7 @@ public class OpenAIService {
                 try {
                     // Извлекаем чистый JSON из ответа
                     String cleanJson = extractJsonFromResponse(content);
+                    logger.info("🔍 Ответ OpenAI (первые 300 символов): {}", content.substring(0, Math.min(300, content.length())));
                     logger.debug("Извлеченный JSON: {}", cleanJson);
                     
                     // Парсим JSON
@@ -161,15 +149,17 @@ public class OpenAIService {
                 e.getMessage().contains("tokens per min") ||
                 e.getMessage().contains("maximum context length") ||
                 e.getMessage().contains("resulted in") && e.getMessage().contains("tokens") ||
+                e.getMessage().contains("Limit") && e.getMessage().contains("Requested") ||
+                e.getMessage().contains("input or output tokens must be reduced") ||
                 e.getMessage().contains("не могу анализировать изображения") ||
                 e.getMessage().contains("can't analyze") ||
                 e.getMessage().contains("can't interpret images") ||
                 e.getMessage().contains("Rate limit reached") ||
                 e.getMessage().contains("Unrecognized token")) {
                 
-                logger.warn("OpenAI недоступен: {}", 
+                logger.warn("⚠️ OpenAI лимит токенов: {}", 
                     e.getMessage().substring(0, Math.min(150, e.getMessage().length())));
-                return createErrorAnalysis("Сервис анализа временно недоступен: " + e.getMessage());
+                return createErrorAnalysis("🔧 Изображение слишком детальное. Попробуйте более простое фото или уменьшите размер файла.");
             }
             
             return createErrorAnalysis("Ошибка при анализе изображения: " + e.getMessage());
@@ -241,19 +231,33 @@ public class OpenAIService {
             logger.info("Обработка сообщения пользователя: {}", userMessage);
             
             String systemPrompt = """
-                Ты - AI помощник по питанию и фитнесу в приложении FitCoach.
+                Ты - персональный фитнес тренер и нутрициолог в приложении FitCoach. Обращайся к пользователю на "ты".
                 
-                Твоя роль:
-                - Отвечать на вопросы о питании, калориях, диетах
-                - Давать советы по здоровому питанию
-                - Помогать с планированием рациона
-                - Объяснять пищевую ценность продуктов
-                - Поддерживать мотивацию пользователей
+                📋 СТРУКТУРА ОТВЕТОВ:
                 
-                Контекст пользователя: """ + (userContext != null ? userContext : "Новый пользователь") + """
+                🎯 **Главное:** [краткий ответ]
                 
-                Отвечай на русском языке, будь дружелюбным и профессиональным.
-                Если не знаешь точного ответа, честно признайся и предложи обратиться к специалисту.
+                📊 **Детали:**
+                • Пункт 1
+                • Пункт 2  
+                • Пункт 3
+                
+                💡 **Рекомендации:**
+                ✅ Что делать
+                ❌ Чего избегать
+                
+                🚀 **Следующий шаг:** [конкретное действие]
+                
+                ТВОЯ РОЛЬ КАК ТРЕНЕРА:
+                - Мотивируй и поддерживай 
+                - Давай конкретные планы действий
+                - Объясняй "почему" за каждым советом
+                - Адаптируй советы под цели пользователя
+                - Отслеживай прогресс и корректируй подход
+                
+                Контекст пользователя: """ + (userContext != null ? userContext : "Новый подопечный") + """
+                
+                Пиши по-русски, будь мотивирующим но реалистичным. Используй эмодзи для структуры.
                 """;
 
             List<ChatMessage> messages = Arrays.asList(
@@ -436,7 +440,9 @@ public class OpenAIService {
      */
     private String sendImageToOpenAI(String base64Image) {
         try {
-            // Правильный формат для GPT-4V API с изображениями
+            // Создаем JSON вручную для надежности
+            String cleanPrompt = NUTRITION_ANALYSIS_PROMPT.replace("\"", "\\\"").replace("\n", " ");
+            
             String requestBody = String.format("""
                 {
                   "model": "gpt-4o",
@@ -457,10 +463,12 @@ public class OpenAIService {
                       ]
                     }
                   ],
-                  "max_tokens": 400,
+                  "max_tokens": 800,
                   "temperature": 0.1
                 }
-                """, NUTRITION_ANALYSIS_PROMPT.replace("\"", "\\\""), base64Image);
+                """, cleanPrompt, base64Image);
+            
+            logger.debug("📤 Отправляемый JSON размер: {} символов", requestBody.length());
             
             HttpClient client = HttpClient.newHttpClient();
             HttpRequest request = HttpRequest.newBuilder()
@@ -475,6 +483,7 @@ public class OpenAIService {
             
             if (response.statusCode() == 200) {
                 logger.info("✅ Успешный ответ от OpenAI GPT-4V");
+                logger.debug("🔍 Полный ответ OpenAI: {}", response.body().substring(0, Math.min(500, response.body().length())));
                 return response.body();
             } else {
                 logger.error("❌ OpenAI API вернул ошибку: {} - {}", response.statusCode(), response.body());

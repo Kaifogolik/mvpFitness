@@ -21,11 +21,11 @@ public class ImageProcessor {
     
     private static final Logger logger = LoggerFactory.getLogger(ImageProcessor.class);
     
-    // Максимальные параметры для OpenAI
-    private static final int MAX_WIDTH = 2048;
-    private static final int MAX_HEIGHT = 2048;
-    private static final long MAX_FILE_SIZE = 4 * 1024 * 1024; // 4MB в base64
-    private static final float JPEG_QUALITY = 0.8f;
+    // Максимальные параметры для OpenAI (оптимизировано для экономии токенов)
+    private static final int MAX_WIDTH = 512;  // Уменьшено с 2048 для экономии токенов
+    private static final int MAX_HEIGHT = 512; // Уменьшено с 2048 для экономии токенов  
+    private static final long MAX_FILE_SIZE = 512 * 1024; // 512KB вместо 4MB
+    private static final float JPEG_QUALITY = 0.6f; // Больше сжатие для экономии
     
     /**
      * Обрабатывает изображение для оптимального анализа в OpenAI
