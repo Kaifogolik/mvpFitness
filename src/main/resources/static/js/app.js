@@ -27,28 +27,53 @@ class FitCoachApp {
 
     initTelegramWebApp() {
         // Конфигурация Telegram WebApp
-        this.tg.ready();
-        this.tg.expand();
-        
-        // Настройка темы
-        this.applyTelegramTheme();
-        
-        // Настройка главной кнопки
-        this.tg.MainButton.setText('Добавить питание');
-        this.tg.MainButton.onClick(() => this.addFood());
-        
-        // Получение данных пользователя Telegram
-        const user = this.tg.initDataUnsafe?.user;
-        if (user) {
-            this.currentUser = {
-                id: user.id,
-                firstName: user.first_name,
-                lastName: user.last_name,
-                username: user.username,
-                languageCode: user.language_code
-            };
+        if (window.Telegram && window.Telegram.WebApp) {
+            this.tg.ready();
+            this.tg.expand();
             
-            console.log('👤 Пользователь Telegram:', this.currentUser);
+            // Настройка темы
+            this.applyTelegramTheme();
+            
+            // Настройка главной кнопки
+            this.tg.MainButton.setText('Добавить питание');
+            this.tg.MainButton.onClick(() => this.addFood());
+            
+            // Получение данных пользователя Telegram
+            const user = this.tg.initDataUnsafe?.user;
+            if (user) {
+                this.telegramId = user.id.toString();
+                this.currentUser = {
+                    id: user.id,
+                    firstName: user.first_name,
+                    lastName: user.last_name,
+                    username: user.username,
+                    languageCode: user.language_code
+                };
+                
+                console.log('👤 Пользователь Telegram:', this.currentUser);
+            } else {
+                // Fallback для тестирования в браузере
+                this.telegramId = 'test_user';
+                this.currentUser = {
+                    id: 'test_user',
+                    firstName: 'Test',
+                    lastName: 'User',
+                    username: 'test_user',
+                    languageCode: 'ru'
+                };
+                console.log('🧪 Тестовый режим - используем test_user');
+            }
+        } else {
+            // Полный fallback для браузера без Telegram
+            this.telegramId = 'test_user';
+            this.currentUser = {
+                id: 'test_user',
+                firstName: 'Test',
+                lastName: 'User',
+                username: 'test_user',
+                languageCode: 'ru'
+            };
+            console.log('🌐 Браузерный режим - используем test_user');
         }
     }
 
@@ -191,30 +216,46 @@ class FitCoachApp {
     // Загрузка данных
     async loadUserData() {
         try {
-            // Пока используем тестовые данные из API
-            const health = await this.apiCall('/api/test/health');
-            console.log('✅ Соединение с API установлено:', health);
+            console.log(`👤 Загружаем профиль пользователя: ${this.telegramId}`);
+            
+            // Загружаем профиль пользователя из Mock API
+            const userProfile = await this.apiCall(`/api/users/${this.telegramId}/profile`);
+            
+            if (userProfile.success) {
+                this.currentUserProfile = userProfile.profile;
+                this.updateProfileUI(userProfile);
+                console.log('✅ Профиль пользователя загружен:', userProfile);
+            } else {
+                // Показываем форму создания профиля
+                this.showProfileCreationForm();
+                console.log('📝 Профиль не найден - показываем форму создания');
+            }
         } catch (error) {
-            console.error('❌ Ошибка загрузки данных пользователя:', error);
+            console.error('❌ Ошибка загрузки профиля пользователя:', error);
+            this.showError('Ошибка загрузки профиля пользователя');
         }
     }
 
     async loadDashboardData() {
         try {
-            // Загружаем статистику дашборда
-            const info = await this.apiCall('/api/test/info');
+            console.log(`📊 Загружаем статистику дашборда для: ${this.telegramId}`);
             
-            // Обновляем UI с тестовыми данными
-            this.updateDashboardUI({
-                todayCalories: Math.floor(Math.random() * 1500) + 500,
-                currentWeight: '75.2 кг',
-                dailyGoal: 2000,
-                streakDays: Math.floor(Math.random() * 30) + 1
-            });
+            // Загружаем дневную статистику из Mock API
+            const dailyStats = await this.apiCall(`/api/nutrition/${this.telegramId}/daily`);
             
-            console.log('📊 Данные дашборда загружены');
+            // Загружаем недельную статистику из Mock API  
+            const weeklyStats = await this.apiCall(`/api/nutrition/${this.telegramId}/weekly`);
+            
+            // Загружаем рекомендации из Mock API
+            const recommendations = await this.apiCall(`/api/nutrition/${this.telegramId}/recommendations`);
+            
+            // Обновляем UI с реальными данными
+            this.updateDashboardStats(dailyStats, weeklyStats, recommendations);
+            
+            console.log('✅ Статистика дашборда загружена');
         } catch (error) {
             console.error('❌ Ошибка загрузки данных дашборда:', error);
+            this.showError('Ошибка загрузки статистики');
         }
     }
 
@@ -228,6 +269,143 @@ class FitCoachApp {
         // Обновляем прогресс калорий в питании
         document.getElementById('consumedCalories').textContent = data.todayCalories;
         document.getElementById('remainingCalories').textContent = Math.max(0, data.dailyGoal - data.todayCalories);
+    }
+
+    updateProfileUI(userProfileData) {
+        // Обновляем профиль пользователя в UI
+        const profile = userProfileData.profile;
+        const user = userProfileData.user;
+        
+        // Обновляем имя пользователя если есть данные от сервера
+        if (user && user.firstName) {
+            this.currentUser.firstName = user.firstName;
+            this.currentUser.lastName = user.lastName;
+            this.updateUserUI();
+        }
+        
+        // Обновляем данные профиля
+        if (profile) {
+            const goalElement = document.getElementById('currentGoal');
+            const weightElement = document.getElementById('currentWeight');
+            const heightElement = document.getElementById('currentHeight');
+            
+            if (goalElement) goalElement.textContent = this.translateGoal(profile.goal);
+            if (weightElement) weightElement.textContent = `${profile.currentWeight} кг`;
+            if (heightElement) heightElement.textContent = `${profile.height} см`;
+        }
+        
+        console.log('✅ UI профиля обновлен');
+    }
+    
+    updateDashboardStats(dailyStats, weeklyStats, recommendations) {
+        // Обновляем статистику дашборда с реальными данными
+        if (dailyStats && dailyStats.success) {
+            document.getElementById('todayCalories').textContent = Math.round(dailyStats.total_calories);
+            document.getElementById('consumedCalories').textContent = Math.round(dailyStats.total_calories);
+            document.getElementById('remainingCalories').textContent = Math.round(dailyStats.remaining_calories);
+            document.getElementById('dailyGoal').textContent = dailyStats.goal_calories;
+            
+            // Обновляем БЖУ если есть элементы
+            const proteinElement = document.getElementById('todayProtein'); 
+            const carbsElement = document.getElementById('todayCarbs');
+            const fatElement = document.getElementById('todayFat');
+            
+            if (proteinElement) proteinElement.textContent = `${Math.round(dailyStats.total_protein)}г`;
+            if (carbsElement) carbsElement.textContent = `${Math.round(dailyStats.total_carbs)}г`;
+            if (fatElement) fatElement.textContent = `${Math.round(dailyStats.total_fat)}г`;
+        }
+        
+        if (weeklyStats && weeklyStats.success) {
+            document.getElementById('weeklyAvgCalories').textContent = Math.round(weeklyStats.average_daily_calories);
+            document.getElementById('streakDays').textContent = weeklyStats.days_tracked;
+        }
+        
+        // Показываем рекомендации
+        if (recommendations && recommendations.success) {
+            this.displayRecommendations(recommendations.recommendations);
+        }
+        
+        console.log('✅ Статистика дашборда обновлена');
+    }
+    
+    showProfileCreationForm() {
+        // Показываем форму создания профиля
+        console.log('📝 Показываем форму создания профиля');
+        
+        // Переключаемся на таб Profile
+        const profileTab = document.querySelector('[data-tab="profile"]');
+        const profileContent = document.getElementById('profile');
+        
+        if (profileTab && profileContent) {
+            // Активируем таб профиля  
+            document.querySelectorAll('.nav-tab').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            
+            profileTab.classList.add('active');
+            profileContent.classList.add('active');
+            
+            // Показываем сообщение о необходимости заполнить профиль
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'profile-setup-message';
+            messageDiv.innerHTML = `
+                <h3>🎯 Настройка профиля</h3>
+                <p>Для персональных рекомендаций заполните свой профиль</p>
+            `;
+            
+            profileContent.insertBefore(messageDiv, profileContent.firstChild);
+        }
+    }
+    
+    showError(message) {
+        // Показываем ошибку пользователю
+        console.error('❌ Ошибка:', message);
+        
+        // Создаем уведомление об ошибке
+        const errorDiv = document.createElement('div');
+        errorDiv.className = 'error-notification';
+        errorDiv.textContent = message;
+        errorDiv.style.cssText = `
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #ff4444;
+            color: white;
+            padding: 12px 20px;
+            border-radius: 8px;
+            z-index: 1000;
+            font-size: 14px;
+        `;
+        
+        document.body.appendChild(errorDiv);
+        
+        // Убираем уведомление через 3 секунды
+        setTimeout(() => {
+            if (errorDiv.parentNode) {
+                errorDiv.parentNode.removeChild(errorDiv);
+            }
+        }, 3000);
+    }
+    
+    displayRecommendations(recommendations) {
+        // Отображаем рекомендации в UI
+        const recommendationsContainer = document.getElementById('recommendationsList');
+        if (recommendationsContainer && recommendations) {
+            recommendationsContainer.innerHTML = recommendations
+                .map(rec => `<div class="recommendation-item">${rec}</div>`)
+                .join('');
+        }
+    }
+    
+    translateGoal(goal) {
+        // Переводим цель на русский
+        const goals = {
+            'WEIGHT_LOSS': 'Похудение',
+            'WEIGHT_GAIN': 'Набор массы', 
+            'MAINTENANCE': 'Поддержание веса',
+            'MUSCLE_GAIN': 'Набор мышечной массы'
+        };
+        return goals[goal] || goal;
     }
 
     async loadNutritionData() {
@@ -259,15 +437,6 @@ class FitCoachApp {
 
     hideLoading() {
         document.getElementById('loadingOverlay').classList.remove('show');
-    }
-
-    showError(message) {
-        // Показываем уведомление об ошибке через Telegram
-        if (this.tg.showAlert) {
-            this.tg.showAlert(message);
-        } else {
-            alert(message);
-        }
     }
 
     showSuccess(message) {
