@@ -54,6 +54,9 @@
                         <div class="stat-info">
                             <div class="stat-value" id="todayCalories">0</div>
                             <div class="stat-label">Калории сегодня</div>
+                            <div class="progress-bar" id="caloriesProgress">
+                                <div class="progress-fill" style="width: 0%"></div>
+                            </div>
                         </div>
                     </div>
                     
@@ -78,6 +81,9 @@
                         <div class="stat-info">
                             <div class="stat-value" id="streakDays">1</div>
                             <div class="stat-label">Дней подряд</div>
+                            <div class="progress-bar" id="streakProgress">
+                                <div class="progress-fill" style="width: 0%"></div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -337,5 +343,8 @@
             window.aiChat = window.testAiChat;
         }, 1000);
     </script>
+
+    <!-- Floating Action Button -->
+    <button class="fab" onclick="addFood()" title="Добавить еду">📸</button>
 </body>
 </html> 

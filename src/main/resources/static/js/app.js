@@ -228,17 +228,23 @@ class FitCoachApp {
             } else {
                 // Показываем форму создания профиля
                 this.showProfileCreationForm();
+                this.showWarning('Профиль не найден. Создайте новый профиль для персональных рекомендаций.');
                 console.log('📝 Профиль не найден - показываем форму создания');
             }
         } catch (error) {
             console.error('❌ Ошибка загрузки профиля пользователя:', error);
-            this.showError('Ошибка загрузки профиля пользователя');
+            this.showError('Ошибка загрузки профиля. Попробуйте обновить страницу.');
         }
     }
 
     async loadDashboardData() {
         try {
             console.log(`📊 Загружаем статистику дашборда для: ${this.telegramId}`);
+            
+            // Показываем индикаторы загрузки для статистики
+            this.showLoading('todayCalories', true);
+            this.showLoading('dailyGoal', true);
+            this.showLoading('streakDays', true);
             
             // Загружаем дневную статистику из Mock API
             const dailyStats = await this.apiCall(`/api/nutrition/${this.telegramId}/daily`);
@@ -252,10 +258,18 @@ class FitCoachApp {
             // Обновляем UI с реальными данными
             this.updateDashboardStats(dailyStats, weeklyStats, recommendations);
             
+            // Скрываем индикаторы загрузки
+            this.showLoading('todayCalories', false);
+            this.showLoading('dailyGoal', false);
+            this.showLoading('streakDays', false);
+            
             console.log('✅ Статистика дашборда загружена');
         } catch (error) {
             console.error('❌ Ошибка загрузки данных дашборда:', error);
-            this.showError('Ошибка загрузки статистики');
+            this.showLoading('todayCalories', false);
+            this.showLoading('dailyGoal', false);
+            this.showLoading('streakDays', false);
+            this.showError('Ошибка загрузки статистики. Проверьте подключение.');
         }
     }
 
@@ -298,12 +312,22 @@ class FitCoachApp {
     }
     
     updateDashboardStats(dailyStats, weeklyStats, recommendations) {
-        // Обновляем статистику дашборда с реальными данными
+        // Обновляем статистику дашборда с реальными данными и анимациями
         if (dailyStats && dailyStats.success) {
-            document.getElementById('todayCalories').textContent = Math.round(dailyStats.total_calories);
-            document.getElementById('consumedCalories').textContent = Math.round(dailyStats.total_calories);
-            document.getElementById('remainingCalories').textContent = Math.round(dailyStats.remaining_calories);
-            document.getElementById('dailyGoal').textContent = dailyStats.goal_calories;
+            // Анимированное обновление калорий
+            this.animateValue('todayCalories', 0, Math.round(dailyStats.total_calories), 1000);
+            this.animateValue('dailyGoal', 0, dailyStats.goal_calories, 800);
+            
+            // Обновляем прогресс калорий
+            const caloriesProgress = (dailyStats.total_calories / dailyStats.goal_calories) * 100;
+            setTimeout(() => this.updateProgressBar('caloriesProgress', caloriesProgress), 500);
+            
+            // Безопасное обновление элементов (только если они существуют)
+            const consumedElement = document.getElementById('consumedCalories');
+            const remainingElement = document.getElementById('remainingCalories');
+            
+            if (consumedElement) consumedElement.textContent = Math.round(dailyStats.total_calories);
+            if (remainingElement) remainingElement.textContent = Math.round(dailyStats.remaining_calories);
             
             // Обновляем БЖУ если есть элементы
             const proteinElement = document.getElementById('todayProtein'); 
@@ -316,16 +340,51 @@ class FitCoachApp {
         }
         
         if (weeklyStats && weeklyStats.success) {
-            document.getElementById('weeklyAvgCalories').textContent = Math.round(weeklyStats.average_daily_calories);
-            document.getElementById('streakDays').textContent = weeklyStats.days_tracked;
+            // Обновляем только существующие элементы
+            this.animateValue('streakDays', 0, weeklyStats.days_tracked, 600);
+            
+            // Прогресс streak (например, из 7 дней)
+            const streakProgress = (weeklyStats.days_tracked / 7) * 100;
+            setTimeout(() => this.updateProgressBar('streakProgress', streakProgress), 800);
+            
+            // Обновляем средние калории если элемент существует
+            const weeklyAvgElement = document.getElementById('weeklyAvgCalories');
+            if (weeklyAvgElement) {
+                this.animateValue('weeklyAvgCalories', 0, Math.round(weeklyStats.average_daily_calories), 1200);
+            }
         }
         
-        // Показываем рекомендации
-        if (recommendations && recommendations.success) {
-            this.displayRecommendations(recommendations.recommendations);
+        // Показываем рекомендации если метод существует
+        if (recommendations && recommendations.success && this.displayRecommendations) {
+            setTimeout(() => this.displayRecommendations(recommendations.recommendations), 1000);
         }
         
-        console.log('✅ Статистика дашборда обновлена');
+        console.log('✅ Статистика дашборда обновлена с анимациями');
+    }
+    
+    animateValue(elementId, start, end, duration) {
+        // Анимированное изменение числовых значений
+        const element = document.getElementById(elementId);
+        if (!element) return;
+        
+        const range = end - start;
+        const startTime = Date.now();
+        
+        const timer = setInterval(() => {
+            const elapsed = Date.now() - startTime;
+            const progress = Math.min(elapsed / duration, 1);
+            
+            // Easing function для плавной анимации
+            const easedProgress = 1 - Math.pow(1 - progress, 3);
+            const current = Math.round(start + (range * easedProgress));
+            
+            element.textContent = current;
+            
+            if (progress >= 1) {
+                clearInterval(timer);
+                element.textContent = end; // Убеждаемся что финальное значение точное
+            }
+        }, 16); // ~60fps
     }
     
     showProfileCreationForm() {
@@ -357,34 +416,99 @@ class FitCoachApp {
     }
     
     showError(message) {
-        // Показываем ошибку пользователю
+        // Показываем красивое уведомление об ошибке
         console.error('❌ Ошибка:', message);
+        this.showNotification(message, 'error');
+    }
+    
+    showSuccess(message) {
+        // Показываем уведомление об успехе
+        console.log('✅ Успех:', message);
+        this.showNotification(message, 'success');
+    }
+    
+    showWarning(message) {
+        // Показываем предупреждение
+        console.warn('⚠️ Предупреждение:', message);
+        this.showNotification(message, 'warning');
+    }
+    
+    showNotification(message, type = 'info') {
+        // Создаем красивое уведомление
+        const notification = document.createElement('div');
+        notification.className = `notification ${type}`;
         
-        // Создаем уведомление об ошибке
-        const errorDiv = document.createElement('div');
-        errorDiv.className = 'error-notification';
-        errorDiv.textContent = message;
-        errorDiv.style.cssText = `
-            position: fixed;
-            top: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: #ff4444;
-            color: white;
-            padding: 12px 20px;
-            border-radius: 8px;
-            z-index: 1000;
-            font-size: 14px;
-        `;
+        // Добавляем иконку в зависимости от типа
+        const icons = {
+            success: '✅',
+            error: '❌', 
+            warning: '⚠️',
+            info: '💡'
+        };
         
-        document.body.appendChild(errorDiv);
+        notification.innerHTML = `${icons[type] || icons.info} ${message}`;
+        document.body.appendChild(notification);
         
-        // Убираем уведомление через 3 секунды
+        // Убираем уведомление через 4 секунды с анимацией
         setTimeout(() => {
-            if (errorDiv.parentNode) {
-                errorDiv.parentNode.removeChild(errorDiv);
+            notification.style.animation = 'slideOutUp 0.3s ease-in';
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.parentNode.removeChild(notification);
+                }
+            }, 300);
+        }, 4000);
+    }
+    
+    showLoading(elementId, show = true) {
+        // Показываем/скрываем индикатор загрузки
+        const element = document.getElementById(elementId);
+        if (!element) return;
+        
+        if (show) {
+            element.classList.add('loading');
+            // Добавляем spinner если это кнопка
+            if (element.tagName === 'BUTTON') {
+                const spinner = document.createElement('span');
+                spinner.className = 'loading-spinner';
+                element.insertBefore(spinner, element.firstChild);
             }
-        }, 3000);
+        } else {
+            element.classList.remove('loading');
+            // Убираем spinner
+            const spinner = element.querySelector('.loading-spinner');
+            if (spinner) {
+                spinner.remove();
+            }
+        }
+    }
+    
+    showSkeleton(containerSelector) {
+        // Показываем skeleton loader
+        const container = document.querySelector(containerSelector);
+        if (!container) return;
+        
+        const skeleton = document.createElement('div');
+        skeleton.className = 'skeleton';
+        skeleton.style.height = '60px';
+        skeleton.style.width = '100%';
+        skeleton.style.marginBottom = '16px';
+        
+        container.innerHTML = '';
+        for (let i = 0; i < 3; i++) {
+            container.appendChild(skeleton.cloneNode());
+        }
+    }
+    
+    updateProgressBar(elementId, percentage) {
+        // Обновляем прогресс бар
+        const progressBar = document.getElementById(elementId);
+        if (!progressBar) return;
+        
+        const fill = progressBar.querySelector('.progress-fill') || 
+                    progressBar.appendChild(document.createElement('div'));
+        fill.className = 'progress-fill';
+        fill.style.width = `${Math.min(100, Math.max(0, percentage))}%`;
     }
     
     displayRecommendations(recommendations) {
@@ -437,15 +561,6 @@ class FitCoachApp {
 
     hideLoading() {
         document.getElementById('loadingOverlay').classList.remove('show');
-    }
-
-    showSuccess(message) {
-        // Показываем уведомление об успехе
-        if (this.tg.showAlert) {
-            this.tg.showAlert(message);
-        } else {
-            alert(message);
-        }
     }
 
     async refreshData() {
