@@ -2,6 +2,10 @@ package com.fitcoach.infrastructure.telegram;
 
 import com.fitcoach.infrastructure.ai.NutritionAnalysis;
 import com.fitcoach.infrastructure.ai.OpenAIService;
+import com.fitcoach.model.NutritionEntry;
+import com.fitcoach.model.User;
+import com.fitcoach.service.NutritionService;
+import com.fitcoach.service.UserService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,6 +30,7 @@ import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 
 @Component
 public class SimpleTelegramBot extends TelegramLongPollingBot {
@@ -43,6 +48,12 @@ public class SimpleTelegramBot extends TelegramLongPollingBot {
     
     @Autowired
     private OpenAIService openAIService;
+    
+    @Autowired
+    private UserService userService;
+    
+    @Autowired
+    private NutritionService nutritionService;
 
     @Override
     public String getBotUsername() {
@@ -61,16 +72,27 @@ public class SimpleTelegramBot extends TelegramLongPollingBot {
                 Message message = update.getMessage();
                 long chatId = message.getChatId();
                 String userName = message.getFrom().getFirstName();
+                String lastName = message.getFrom().getLastName();
+                String username = message.getFrom().getUserName();
+                String telegramId = String.valueOf(message.getFrom().getId());
+                
+                // Регистрируем или обновляем пользователя
+                User user = userService.findOrCreateUser(telegramId, 
+                    username != null ? username : "user_" + telegramId, 
+                    userName, lastName);
+                
+                // Обновляем время последней активности
+                userService.updateLastActiveTime(telegramId);
 
                 // Обработка фото
                 if (message.hasPhoto()) {
-                    handlePhotoMessage(message);
+                    handlePhotoMessage(message, user);
                     return;
                 }
 
                 // Обработка текстовых сообщений
                 if (message.hasText()) {
-                    handleTextMessage(chatId, message.getText(), userName);
+                    handleTextMessage(chatId, message.getText(), userName, user);
                 }
             }
         } catch (Exception e) {
@@ -81,7 +103,7 @@ public class SimpleTelegramBot extends TelegramLongPollingBot {
     /**
      * Обработка фото сообщений - анализ еды через OpenAI
      */
-    private void handlePhotoMessage(Message message) {
+    private void handlePhotoMessage(Message message, User user) {
         try {
             String firstName = message.getFrom().getFirstName();
             logger.info("Получено фото от пользователя: {}", firstName);
@@ -126,6 +148,16 @@ public class SimpleTelegramBot extends TelegramLongPollingBot {
                 // Анализируем изображение (с fallback в случае ошибок)
                 NutritionAnalysis analysis = openAIService.analyzeFoodImage(imageBase64);
                 
+                // Сохраняем результат анализа в историю питания
+                try {
+                    List<NutritionEntry> savedEntries = nutritionService.saveNutritionAnalysis(user, analysis, imageBase64);
+                    logger.info("💾 Сохранено {} записей в историю питания для пользователя: {}", 
+                               savedEntries.size(), user.getUsername());
+                } catch (Exception saveException) {
+                    logger.error("Ошибка сохранения анализа в историю для пользователя {}: {}", 
+                               user.getUsername(), saveException.getMessage());
+                }
+                
                 // Отправляем результат
                 String response = formatNutritionAnalysis(analysis, firstName);
                 sendMessage(message.getChatId(), response);
@@ -149,7 +181,7 @@ public class SimpleTelegramBot extends TelegramLongPollingBot {
     /**
      * Обработка текстовых сообщений
      */
-    private void handleTextMessage(long chatId, String messageText, String userName) {
+    private void handleTextMessage(long chatId, String messageText, String userName, User user) {
         String responseText = "";
 
         switch (messageText) {
@@ -291,6 +323,22 @@ public class SimpleTelegramBot extends TelegramLongPollingBot {
                              "📡 API: Доступен\n\n" +
                              "Docs: " + miniAppUrl + "/swagger-ui.html";
                 break;
+                
+            case "/profile":
+                sendProfileInfo(chatId, user);
+                return;
+                
+            case "/stats":
+                sendNutritionStats(chatId, user);
+                return;
+                
+            case "/history":
+                sendNutritionHistory(chatId, user);
+                return;
+                
+            case "/recommendations": 
+                sendPersonalRecommendations(chatId, user);
+                return;
 
             default:
                 // Если это не команда, пробуем обработать как вопрос к AI
@@ -465,5 +513,189 @@ public class SimpleTelegramBot extends TelegramLongPollingBot {
         keyboardMarkup.setKeyboard(keyboardRows);
 
         return keyboardMarkup;
+    }
+    
+    /**
+     * Отправить информацию о профиле пользователя
+     */
+    private void sendProfileInfo(long chatId, User user) {
+        try {
+            Optional<UserService.UserWithProfile> userWithProfile = userService.getUserWithProfile(user.getTelegramId());
+            
+            if (userWithProfile.isEmpty() || !userWithProfile.get().hasProfile()) {
+                sendMessage(chatId, 
+                    "👤 Профиль не настроен\n\n" +
+                    "Для получения персональных рекомендаций создайте профиль:\n" +
+                    "📱 " + miniAppUrl + "/profile\n\n" +
+                    "Укажите:\n" +
+                    "• Возраст, вес, рост\n" +
+                    "• Уровень активности\n" +
+                    "• Цель фитнеса");
+                return;
+            }
+            
+            com.fitcoach.model.UserProfile profile = userWithProfile.get().getProfile();
+            String profileInfo = String.format(
+                "👤 Ваш профиль:\n\n" +
+                "📊 Параметры:\n" +
+                "• Возраст: %s лет\n" +
+                "• Вес: %.1f кг\n" +
+                "• Рост: %s см\n" +
+                "• Пол: %s\n" +
+                "• Активность: %s\n\n" +
+                "🎯 Цель: %s\n\n" +
+                "📈 Дневные нормы:\n" +
+                "• Калории: %.0f ккал\n" +
+                "• Белки: %.0f г\n" +
+                "• Жиры: %.0f г\n" +
+                "• Углеводы: %.0f г\n\n" +
+                "📱 Редактировать: %s/profile",
+                profile.getAge() != null ? profile.getAge() : "не указан",
+                profile.getWeight() != null ? profile.getWeight() : 0,
+                profile.getHeight() != null ? profile.getHeight() : "не указан",
+                profile.getGender() != null ? profile.getGender().getDisplayName() : "не указан",
+                profile.getActivityLevel() != null ? profile.getActivityLevel().getDisplayName() : "не указан",
+                profile.getFitnessGoal() != null ? profile.getFitnessGoal().getDisplayName() : "не указана",
+                profile.getDailyCaloriesGoal() != null ? profile.getDailyCaloriesGoal() : 0,
+                profile.getDailyProteinsGoal() != null ? profile.getDailyProteinsGoal() : 0,
+                profile.getDailyFatsGoal() != null ? profile.getDailyFatsGoal() : 0,
+                profile.getDailyCarbsGoal() != null ? profile.getDailyCarbsGoal() : 0,
+                miniAppUrl
+            );
+            
+            sendMessage(chatId, profileInfo);
+            
+        } catch (Exception e) {
+            logger.error("Ошибка получения профиля: {}", e.getMessage());
+            sendMessage(chatId, "❌ Ошибка получения профиля. Попробуйте позже.");
+        }
+    }
+    
+    /**
+     * Отправить статистику питания за сегодня
+     */
+    private void sendNutritionStats(long chatId, User user) {
+        try {
+            NutritionService.DailyNutritionStats todayStats = nutritionService.getDailyStats(user, java.time.LocalDate.now());
+            
+            if (todayStats.getEntries().isEmpty()) {
+                sendMessage(chatId, 
+                    "📊 Статистика за сегодня:\n\n" +
+                    "Пока нет записей о питании.\n\n" +
+                    "📸 Отправьте фото еды для анализа!");
+                return;
+            }
+            
+            String statsMessage = String.format(
+                "📊 Статистика за сегодня:\n\n" +
+                "🔥 Калории: %.0f ккал\n" +
+                "🥩 Белки: %.1f г\n" +
+                "🧈 Жиры: %.1f г\n" +
+                "🍞 Углеводы: %.1f г\n\n" +
+                "📈 Приемов пищи: %d\n\n",
+                todayStats.getTotalCalories(),
+                todayStats.getTotalProteins(),
+                todayStats.getTotalFats(),
+                todayStats.getTotalCarbs(),
+                todayStats.getEntries().size()
+            );
+            
+            // Добавляем прогресс к целям если есть профиль
+            if (todayStats.getProfile() != null) {
+                statsMessage += String.format(
+                    "🎯 Прогресс к целям:\n" +
+                    "• Калории: %.0f%%\n" +
+                    "• Белки: %.0f%%\n" +
+                    "• Жиры: %.0f%%\n" +
+                    "• Углеводы: %.0f%%",
+                    todayStats.getCaloriesProgress(),
+                    todayStats.getProteinsProgress(),
+                    todayStats.getFatsProgress(),
+                    todayStats.getCarbsProgress()
+                );
+            }
+            
+            sendMessage(chatId, statsMessage);
+            
+        } catch (Exception e) {
+            logger.error("Ошибка получения статистики: {}", e.getMessage());
+            sendMessage(chatId, "❌ Ошибка получения статистики. Попробуйте позже.");
+        }
+    }
+    
+    /**
+     * Отправить историю питания
+     */
+    private void sendNutritionHistory(long chatId, User user) {
+        try {
+            List<NutritionEntry> recentEntries = nutritionService.getRecentEntries(user, 5);
+            
+            if (recentEntries.isEmpty()) {
+                sendMessage(chatId, 
+                    "📋 История питания пуста\n\n" +
+                    "📸 Отправьте фото еды для создания истории!");
+                return;
+            }
+            
+            StringBuilder historyMessage = new StringBuilder("📋 Последние приемы пищи:\n\n");
+            
+            for (int i = 0; i < recentEntries.size(); i++) {
+                NutritionEntry entry = recentEntries.get(i);
+                historyMessage.append(String.format(
+                    "%d. %s\n" +
+                    "   🔥 %.0f ккал | 🥩 %.1fг | 🧈 %.1fг | 🍞 %.1fг\n" +
+                    "   📅 %s | %s\n\n",
+                    i + 1,
+                    entry.getFoodName(),
+                    entry.getCalories(),
+                    entry.getProteins(),
+                    entry.getFats(),
+                    entry.getCarbs(),
+                    entry.getDate(),
+                    entry.getMealType() != null ? entry.getMealType().getDisplayName() : "Другое"
+                ));
+            }
+            
+            historyMessage.append("📱 Полная история: ").append(miniAppUrl).append("/history");
+            
+            sendMessage(chatId, historyMessage.toString());
+            
+        } catch (Exception e) {
+            logger.error("Ошибка получения истории: {}", e.getMessage());
+            sendMessage(chatId, "❌ Ошибка получения истории. Попробуйте позже.");
+        }
+    }
+    
+    /**
+     * Отправить персональные рекомендации
+     */
+    private void sendPersonalRecommendations(long chatId, User user) {
+        try {
+            List<String> recommendations = nutritionService.getNutritionRecommendations(user);
+            
+            if (recommendations.isEmpty()) {
+                sendMessage(chatId, 
+                    "💡 Рекомендации не готовы\n\n" +
+                    "Для получения персональных рекомендаций:\n" +
+                    "1. Настройте профиль (/profile)\n" +
+                    "2. Добавьте записи о питании (📸 фото еды)\n\n" +
+                    "После недели использования я смогу дать точные советы!");
+                return;
+            }
+            
+            StringBuilder recommendationsMessage = new StringBuilder("💡 Ваши персональные рекомендации:\n\n");
+            
+            for (int i = 0; i < recommendations.size(); i++) {
+                recommendationsMessage.append(String.format("%d. %s\n\n", i + 1, recommendations.get(i)));
+            }
+            
+            recommendationsMessage.append("🎯 Рекомендации обновляются на основе вашего питания и целей.");
+            
+            sendMessage(chatId, recommendationsMessage.toString());
+            
+        } catch (Exception e) {
+            logger.error("Ошибка получения рекомендаций: {}", e.getMessage());
+            sendMessage(chatId, "❌ Ошибка получения рекомендаций. Попробуйте позже.");
+        }
     }
 } 

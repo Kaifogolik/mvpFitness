@@ -462,78 +462,114 @@ class FitCoachApp {
             this.showError('Не удалось получить ответ от AI. Попробуйте через Telegram бота.');
         }
     }
+
+    // Добавление питания через фото - метод класса
+    async addFood() {
+        try {
+            // Создаем input для файла
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = 'image/*';
+            input.capture = 'environment'; // Предпочтение камере
+            
+            input.onchange = async (event) => {
+                const file = event.target.files[0];
+                if (!file) return;
+                
+                this.showLoading('Анализируем изображение...');
+                
+                try {
+                    // Анализируем фото через реальный API
+                    const result = await this.analyzeFood(file);
+                    
+                    this.hideLoading();
+                    
+                    if (result.success && result.analysis) {
+                        console.log('✅ Анализ завершен:', result.analysis);
+                        this.showFoodAnalysis(result.analysis);
+                        
+                        // Обновляем статистику после добавления
+                        await this.loadDashboardData();
+                    } else {
+                        throw new Error(result.message || 'Не удалось проанализировать изображение');
+                    }
+                } catch (error) {
+                    this.hideLoading();
+                    console.error('❌ Ошибка анализа:', error);
+                    this.showError('Ошибка анализа изображения: ' + error.message);
+                }
+            };
+            
+            // Показываем выбор файла
+            input.click();
+            
+        } catch (error) {
+            console.error('❌ Ошибка добавления питания:', error);
+            this.showError('Не удалось открыть камеру');
+        }
+    }
+
+    // Анализ фото еды через API
+    async analyzeFood(file) {
+        const formData = new FormData();
+        formData.append('image', file);
+        formData.append('telegramId', this.telegramId);
+
+        const response = await fetch(`${this.apiBaseUrl}/api/ai/analyze-food-photo`, {
+            method: 'POST',
+            body: formData
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+
+        return await response.json();
+    }
+
+    // Чат с персональным тренером
+    async sendChatMessage(message) {
+        try {
+            console.log('💬 Отправляем сообщение тренеру:', message);
+            
+            const response = await fetch(`${this.apiBaseUrl}/api/ai/chat`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    message: message,
+                    telegramId: this.telegramId
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+
+            const result = await response.json();
+            
+            if (result.success) {
+                console.log('✅ Ответ тренера получен:', result.response);
+                return result.response;
+            } else {
+                throw new Error(result.message || 'Не удалось получить ответ от тренера');
+            }
+        } catch (error) {
+            console.error('❌ Ошибка чата:', error);
+            throw error;
+        }
+    }
 }
 
 // Глобальные функции для HTML
 window.addFood = async function() {
-    app.showLoading();
-    
-    try {
-        // Проверяем доступность AI API
-        const aiStatus = await app.apiCall('/api/ai/status');
-        
-        if (!aiStatus.success || !aiStatus.features.food_analysis) {
-            app.hideLoading();
-            app.showError('AI анализ питания временно недоступен');
-            return;
-        }
-        
-        app.hideLoading();
-        
-        // Предлагаем выбор способа анализа
-        if (app.tg.showConfirm) {
-            app.tg.showConfirm(
-                '📸 Как добавить анализ питания?\n\n🖼️ Из галереи - анализ прямо здесь\n🤖 Через бота - отправить фото в @mvpfitness_bot\n\nВыбрать "Из галереи"?',
-                async (useGallery) => {
-                    if (useGallery) {
-                        // Анализ из галереи
-                        try {
-                            await app.analyzePhotoFromGallery();
-                        } catch (error) {
-                            console.error('Gallery analysis error:', error);
-                        }
-                    } else {
-                        // Переход к Telegram боту
-                        app.tg.showAlert(`
-📸 Анализ через Telegram бота
-
-1. Откройте @mvpfitness_bot
-2. Нажмите "📸 Анализ еды"
-3. Сфотографируйте блюдо
-4. Получите детальный анализ калорий и БЖУ
-
-Результат появится здесь автоматически!
-                        `);
-                        
-                        if (app.tg.openTelegramLink) {
-                            app.tg.openTelegramLink('https://t.me/mvpfitness_bot?start=photo');
-                        }
-                    }
-                }
-            );
-        } else {
-            // Fallback для браузеров без Telegram WebApp
-            const useGallery = confirm('📸 Анализировать фото из галереи? (Нет = через Telegram бота)');
-            
-            if (useGallery) {
-                try {
-                    await app.analyzePhotoFromGallery();
-                } catch (error) {
-                    console.error('Gallery analysis error:', error);
-                }
-            } else {
-                alert('Перейдите к @mvpfitness_bot для анализа фото');
-                window.open('https://t.me/mvpfitness_bot', '_blank');
-            }
-        }
-        
-        // Переключаемся на вкладку питания
-        document.querySelector('[data-tab="nutrition"]').click();
-        
-    } catch (error) {
-        app.hideLoading();
-        app.showError('Ошибка подключения к AI сервису');
-        console.error('AI API Error:', error);
+    // Используем метод класса для анализа фото
+    if (window.app) {
+        await window.app.addFood();
+    } else {
+        console.error('❌ App не инициализирован');
+        alert('Ошибка: приложение не готово');
     }
 };
 
@@ -685,12 +721,6 @@ window.logout = function() {
     }
 };
 
-// Инициализация приложения
-let app;
-document.addEventListener('DOMContentLoaded', () => {
-    app = new FitCoachApp();
-});
-
 // Обработка ошибок
 window.addEventListener('error', (event) => {
     console.error('🚨 Глобальная ошибка:', event.error);
@@ -701,3 +731,11 @@ window.addEventListener('unhandledrejection', (event) => {
     console.error('🚨 Необработанная ошибка промиса:', event.reason);
     event.preventDefault();
 }); 
+
+// Инициализация приложения
+let app;
+document.addEventListener('DOMContentLoaded', () => {
+    console.log('🚀 Инициализация FitCoach AI Mini App...');
+    app = new FitCoachApp();
+    window.app = app; // Делаем доступным глобально для HTML функций
+});

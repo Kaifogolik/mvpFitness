@@ -2,6 +2,10 @@ package com.fitcoach.api;
 
 import com.fitcoach.infrastructure.ai.NutritionAnalysis;
 import com.fitcoach.infrastructure.ai.OpenAIService;
+import com.fitcoach.model.NutritionEntry;
+import com.fitcoach.model.User;
+import com.fitcoach.service.NutritionService;
+import com.fitcoach.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.slf4j.Logger;
@@ -14,6 +18,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * REST API для AI функций
@@ -28,6 +33,12 @@ public class AiController {
     
     @Autowired
     private OpenAIService openAIService;
+    
+    @Autowired
+    private UserService userService;
+    
+    @Autowired
+    private NutritionService nutritionService;
 
     /**
      * Анализ фото еды через OpenAI GPT-4V
@@ -88,6 +99,7 @@ public class AiController {
     public ResponseEntity<Map<String, Object>> analyzeFoodBase64(@RequestBody Map<String, String> request) {
         try {
             String base64Image = request.get("image");
+            String telegramId = request.get("telegramId"); // опционально
             
             if (base64Image == null || base64Image.trim().isEmpty()) {
                 return ResponseEntity.badRequest()
@@ -99,7 +111,8 @@ public class AiController {
                 base64Image = base64Image.split(",")[1];
             }
             
-            logger.info("Анализируем изображение в base64 формате");
+            logger.info("Анализируем изображение в base64 формате{}", 
+                       telegramId != null ? " для пользователя: " + telegramId : "");
             
             // Анализируем через OpenAI
             NutritionAnalysis analysis = openAIService.analyzeFoodImage(base64Image);
@@ -108,6 +121,51 @@ public class AiController {
             response.put("success", true);
             response.put("analysis", analysis);
             response.put("timestamp", new Date());
+            
+            // Сохраняем в историю питания если указан telegramId
+            if (telegramId != null && !telegramId.trim().isEmpty()) {
+                try {
+                    Optional<User> userOpt = userService.findByTelegramId(telegramId);
+                    if (userOpt.isPresent()) {
+                        // Сохраняем анализ в историю питания
+                        List<NutritionEntry> savedEntries = nutritionService.saveNutritionAnalysis(
+                            userOpt.get(), analysis, base64Image);
+                        
+                        // Добавляем информацию о сохраненных записях
+                        List<Map<String, Object>> entriesData = savedEntries.stream()
+                            .map(entry -> {
+                                Map<String, Object> entryData = new HashMap<>();
+                                entryData.put("id", entry.getId());
+                                entryData.put("foodName", entry.getFoodName());
+                                entryData.put("calories", entry.getCalories());
+                                entryData.put("proteins", entry.getProteins());
+                                entryData.put("fats", entry.getFats());
+                                entryData.put("carbs", entry.getCarbs());
+                                entryData.put("mealType", entry.getMealType());
+                                entryData.put("timestamp", entry.getTimestamp());
+                                return entryData;
+                            })
+                            .collect(Collectors.toList());
+                        
+                        response.put("savedToHistory", true);
+                        response.put("nutritionEntries", entriesData);
+                        logger.info("💾 Сохранено {} записей в историю питания для пользователя: {}", 
+                                   savedEntries.size(), telegramId);
+                    } else {
+                        response.put("savedToHistory", false);
+                        response.put("message", "Пользователь не найден, анализ не сохранен в историю");
+                        logger.warn("⚠️ Пользователь {} не найден для сохранения анализа", telegramId);
+                    }
+                } catch (Exception saveException) {
+                    logger.error("Ошибка сохранения анализа в историю для {}: {}", 
+                               telegramId, saveException.getMessage());
+                    response.put("savedToHistory", false);
+                    response.put("saveError", saveException.getMessage());
+                }
+            } else {
+                response.put("savedToHistory", false);
+                response.put("message", "TelegramId не указан, анализ не сохранен в историю");
+            }
             
             return ResponseEntity.ok(response);
             
