@@ -9,6 +9,10 @@ import com.theokanning.openai.completion.chat.ChatMessageRole;
 import com.theokanning.openai.completion.chat.ChatCompletionResult;
 import com.theokanning.openai.image.ImageResult;
 import com.theokanning.openai.service.OpenAiService;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -34,6 +38,7 @@ public class OpenAIService {
     private final OpenAiService openAiService;
     private final ObjectMapper objectMapper;
     private final ImageProcessor imageProcessor;
+    private final String apiKey;
     
     // Универсальный промпт для любой кухни мира (v4.0)
     private static final String NUTRITION_ANALYSIS_PROMPT = """
@@ -64,6 +69,7 @@ public class OpenAIService {
         """;
 
     public OpenAIService(@Value("${openai.api-key}") String apiKey, ImageProcessor imageProcessor) {
+        this.apiKey = apiKey;
         this.openAiService = new OpenAiService(apiKey, Duration.ofSeconds(60));
         this.objectMapper = new ObjectMapper();
         this.imageProcessor = imageProcessor;
@@ -76,61 +82,52 @@ public class OpenAIService {
     @Cacheable(value = "nutritionAnalysis", key = "#imageBase64.hashCode()")
     public NutritionAnalysis analyzeFoodImage(String imageBase64) {
         try {
-            logger.info("Начинаю анализ изображения еды через OpenAI GPT-4o");
+            logger.info("Начинаю анализ изображения еды через OpenAI GPT-4V");
             
-            // Правильный формат для GPT-4V с изображениями
-            ChatCompletionRequest chatRequest = ChatCompletionRequest.builder()
-                    .model("gpt-4o") // GPT-4o с поддержкой изображений
-                    .messages(Arrays.asList(
-                        new ChatMessage(ChatMessageRole.USER.value(), 
-                            NUTRITION_ANALYSIS_PROMPT + "\n\n[IMAGE: " + imageBase64.substring(0, Math.min(100, imageBase64.length())) + "...]")
-                    ))
-                    .maxTokens(400) // Увеличиваем для подробного анализа
-                    .temperature(0.1) // Минимальная креативность для точности
-                    .build();
-
-            logger.info("Отправляю запрос в OpenAI gpt-4o с радикальными оптимизациями токенов...");
-            ChatCompletionResult chatResult = openAiService.createChatCompletion(chatRequest);
+            // Используем прямой HTTP запрос для правильной отправки изображений
+            String httpResponse = sendImageToOpenAI(imageBase64);
             
-            if (chatResult.getChoices() != null && !chatResult.getChoices().isEmpty()) {
-                String response = chatResult.getChoices().get(0).getMessage().getContent();
-                logger.info("Получен ответ от OpenAI: {}", response);
-                
-                // Логируем использование токенов для мониторинга
-                if (chatResult.getUsage() != null) {
-                    logger.info("Использовано токенов - Входящие: {}, Исходящие: {}, Всего: {}", 
-                        chatResult.getUsage().getPromptTokens(),
-                        chatResult.getUsage().getCompletionTokens(), 
-                        chatResult.getUsage().getTotalTokens());
-                }
-                
-                // Проверяем корректность ответа перед парсингом
-                if (response == null || response.trim().isEmpty()) {
-                    logger.warn("Получен пустой ответ от OpenAI");
-                    return createErrorAnalysis("OpenAI вернул пустой ответ. Попробуйте еще раз.");
-                }
+            if (httpResponse == null || httpResponse.trim().isEmpty()) {
+                logger.warn("Получен пустой ответ от OpenAI");
+                return createErrorAnalysis("OpenAI вернул пустой ответ. Попробуйте еще раз.");
+            }
+            
+            // Парсим ответ как ChatCompletion результат
+            JsonNode jsonResponse = objectMapper.readTree(httpResponse);
+            
+            // Логируем использование токенов если есть
+            if (jsonResponse.has("usage")) {
+                JsonNode usage = jsonResponse.get("usage");
+                logger.info("Использовано токенов - Входящие: {}, Исходящие: {}, Всего: {}", 
+                    usage.get("prompt_tokens").asInt(),
+                    usage.get("completion_tokens").asInt(),
+                    usage.get("total_tokens").asInt());
+            }
+            
+            if (jsonResponse.has("choices") && jsonResponse.get("choices").size() > 0) {
+                String content = jsonResponse.get("choices").get(0).get("message").get("content").asText();
+                logger.info("Получен ответ от OpenAI: {}", content);
                 
                 // Проверяем на отказ OpenAI анализировать изображение
-                if (response.contains("I'm sorry") || 
-                    response.contains("I can't") || 
-                    response.contains("cannot") ||
-                    response.contains("unable to") ||
-                    response.contains("Извините") ||
-                    response.contains("не могу") ||
-                    response.contains("не смогу")) {
-                    logger.warn("OpenAI отказался анализировать изображение: {}", response.substring(0, Math.min(100, response.length())));
+                if (content.contains("I'm sorry") || 
+                    content.contains("I can't") || 
+                    content.contains("cannot") ||
+                    content.contains("unable to") ||
+                    content.contains("Извините") ||
+                    content.contains("не могу") ||
+                    content.contains("не смогу")) {
+                    logger.warn("OpenAI отказался анализировать изображение: {}", content.substring(0, Math.min(100, content.length())));
                     return createErrorAnalysis("OpenAI не смог проанализировать изображение. Попробуйте другое фото.");
                 }
                 
                 // Улучшенный парсинг JSON ответа
                 try {
                     // Извлекаем чистый JSON из ответа
-                    String cleanJson = extractJsonFromResponse(response);
+                    String cleanJson = extractJsonFromResponse(content);
                     logger.debug("Извлеченный JSON: {}", cleanJson);
                     
                     // Парсим JSON
-                    ObjectMapper mapper = new ObjectMapper();
-                    NutritionAnalysis analysis = mapper.readValue(cleanJson, NutritionAnalysis.class);
+                    NutritionAnalysis analysis = objectMapper.readValue(cleanJson, NutritionAnalysis.class);
                     
                     // Валидация результата
                     if (isValidAnalysis(analysis)) {
@@ -145,7 +142,7 @@ public class OpenAIService {
                 } catch (JsonProcessingException e) {
                     logger.error("❌ Ошибка парсинга JSON: {}", e.getMessage());
                     logger.debug("Проблемный ответ (первые 300 символов): {}", 
-                        response.substring(0, Math.min(300, response.length())));
+                        content.substring(0, Math.min(300, content.length())));
                     return createErrorAnalysis("Ошибка обработки ответа ИИ. Попробуйте еще раз.");
                 }
                 
@@ -431,6 +428,62 @@ public class OpenAIService {
         } catch (Exception e) {
             logger.warn("OpenAI API недоступен: {}", e.getMessage());
             return false;
+        }
+    }
+    
+    /**
+     * Отправляет изображение в OpenAI GPT-4V через HTTP API (правильный формат)
+     */
+    private String sendImageToOpenAI(String base64Image) {
+        try {
+            // Правильный формат для GPT-4V API с изображениями
+            String requestBody = String.format("""
+                {
+                  "model": "gpt-4o",
+                  "messages": [
+                    {
+                      "role": "user",
+                      "content": [
+                        {
+                          "type": "text",
+                          "text": "%s"
+                        },
+                        {
+                          "type": "image_url",
+                          "image_url": {
+                            "url": "data:image/jpeg;base64,%s"
+                          }
+                        }
+                      ]
+                    }
+                  ],
+                  "max_tokens": 400,
+                  "temperature": 0.1
+                }
+                """, NUTRITION_ANALYSIS_PROMPT.replace("\"", "\\\""), base64Image);
+            
+            HttpClient client = HttpClient.newHttpClient();
+            HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create("https://api.openai.com/v1/chat/completions"))
+                .header("Content-Type", "application/json")
+                .header("Authorization", "Bearer " + apiKey)
+                .POST(HttpRequest.BodyPublishers.ofString(requestBody))
+                .build();
+            
+            logger.info("Отправляю изображение в OpenAI GPT-4V через HTTP API...");
+            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+            
+            if (response.statusCode() == 200) {
+                logger.info("✅ Успешный ответ от OpenAI GPT-4V");
+                return response.body();
+            } else {
+                logger.error("❌ OpenAI API вернул ошибку: {} - {}", response.statusCode(), response.body());
+                return null;
+            }
+            
+        } catch (Exception e) {
+            logger.error("❌ Ошибка при отправке HTTP запроса в OpenAI: {}", e.getMessage(), e);
+            return null;
         }
     }
 
