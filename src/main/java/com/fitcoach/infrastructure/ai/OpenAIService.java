@@ -33,35 +33,47 @@ public class OpenAIService {
     
     private final OpenAiService openAiService;
     private final ObjectMapper objectMapper;
+    private final ImageProcessor imageProcessor;
     
-    // Промпт для анализа питания
+    // Промпт для анализа питания (улучшенная версия v2.0)
     private static final String NUTRITION_ANALYSIS_PROMPT = """
-        JSON only:
+        Ты - эксперт нутрициолог. Проанализируй фото еды и верни ТОЛЬКО JSON в точном формате:
+        
         {
           "detected_foods": [
             {
-              "food_name": "name_ru",
-              "quantity": "weight",
-              "calories": 0,
-              "proteins": 0,
-              "fats": 0,
-              "carbs": 0,
-              "confidence": 0.9
+              "food_name": "точное название на русском",
+              "quantity": "вес в граммах или штуках",
+              "calories": число_калорий,
+              "proteins": граммы_белков,
+              "fats": граммы_жиров,
+              "carbs": граммы_углеводов,
+              "confidence": уверенность_от_0_до_1
             }
           ],
-          "total_calories": 0,
-          "total_proteins": 0,
-          "total_fats": 0,
-          "total_carbs": 0,
-          "confidence_level": 0.9,
-          "analysis_notes": "seen",
-          "health_recommendations": ["tip"]
+          "total_calories": общие_калории,
+          "total_proteins": общие_белки,
+          "total_fats": общие_жиры,
+          "total_carbs": общие_углеводы,
+          "confidence_level": общая_уверенность,
+          "analysis_notes": "что видишь на фото",
+          "health_recommendations": ["совет1", "совет2"]
         }
+        
+        ВАЖНЫЕ ПРАВИЛА:
+        1. Учитывай российскую кухню: борщ, пельмени, котлеты, каши, супы
+        2. Оценивай размер порций по посуде: тарелка ~200-300г, миска ~250-400г
+        3. Если несколько блюд - анализируй каждое отдельно
+        4. Confidence < 0.7 если неясно, что на фото
+        5. В health_recommendations давай практичные советы
+        6. Калории считай на реальный вес порции, не на 100г
+        7. НИКАКОГО лишнего текста - только чистый JSON!
         """;
 
-    public OpenAIService(@Value("${openai.api-key}") String apiKey) {
+    public OpenAIService(@Value("${openai.api-key}") String apiKey, ImageProcessor imageProcessor) {
         this.openAiService = new OpenAiService(apiKey, Duration.ofSeconds(60));
         this.objectMapper = new ObjectMapper();
+        this.imageProcessor = imageProcessor;
     }
 
     /**
@@ -119,13 +131,30 @@ public class OpenAIService {
                     return createDemoFoodAnalysis();
                 }
                 
-                // Парсим JSON ответ
-                ObjectMapper mapper = new ObjectMapper();
+                // Улучшенный парсинг JSON ответа
                 try {
-                    return mapper.readValue(response, NutritionAnalysis.class);
+                    // Извлекаем чистый JSON из ответа
+                    String cleanJson = extractJsonFromResponse(response);
+                    logger.debug("Извлеченный JSON: {}", cleanJson);
+                    
+                    // Парсим JSON
+                    ObjectMapper mapper = new ObjectMapper();
+                    NutritionAnalysis analysis = mapper.readValue(cleanJson, NutritionAnalysis.class);
+                    
+                    // Валидация результата
+                    if (isValidAnalysis(analysis)) {
+                        logger.info("✅ Успешный анализ: {} ккал, уверенность: {}", 
+                            analysis.getTotalCalories(), analysis.getConfidenceLevel());
+                        return analysis;
+                    } else {
+                        logger.warn("⚠️ Некорректные данные в анализе, используем fallback");
+                        return createDemoFoodAnalysis();
+                    }
+                    
                 } catch (JsonProcessingException e) {
-                    logger.error("Ошибка парсинга JSON ответа: {}", e.getMessage());
-                    logger.debug("Проблемный ответ: {}", response.substring(0, Math.min(200, response.length())));
+                    logger.error("❌ Ошибка парсинга JSON: {}", e.getMessage());
+                    logger.debug("Проблемный ответ (первые 300 символов): {}", 
+                        response.substring(0, Math.min(300, response.length())));
                     return createDemoFoodAnalysis();
                 }
                 
@@ -160,20 +189,60 @@ public class OpenAIService {
     }
 
     /**
-     * Анализирует фото еды из файла
+     * Анализирует фото еды из файла с обработкой изображения
      */
     public NutritionAnalysis analyzeFoodImageFromFile(File imageFile) {
         try {
-            // Конвертируем файл в base64
+            // Читаем файл
             byte[] imageBytes = java.nio.file.Files.readAllBytes(imageFile.toPath());
-            String base64Image = java.util.Base64.getEncoder().encodeToString(imageBytes);
             
-            return analyzeFoodImage(base64Image);
+            return analyzeFoodImageFromBytes(imageBytes, imageFile.getName());
             
         } catch (IOException e) {
             logger.error("Ошибка при чтении файла изображения: {}", e.getMessage(), e);
             return createErrorAnalysis("Ошибка при чтении файла: " + e.getMessage());
         }
+    }
+    
+    /**
+     * Анализирует фото еды из массива байт с предварительной обработкой
+     */
+    public NutritionAnalysis analyzeFoodImageFromBytes(byte[] imageBytes, String fileName) {
+        try {
+            logger.info("🔍 Анализ изображения: {}, размер: {} bytes", fileName, imageBytes.length);
+            
+            // Валидируем изображение
+            ImageProcessor.ImageValidationResult validation = imageProcessor.validateImage(imageBytes, fileName);
+            if (!validation.isValid()) {
+                logger.warn("❌ Валидация изображения не пройдена: {}", validation.getMessage());
+                return createErrorAnalysis("Некорректное изображение: " + validation.getMessage());
+            }
+            
+            // Обрабатываем изображение для OpenAI
+            ImageProcessor.ProcessedImage processedImage = imageProcessor.processImageForAI(
+                imageBytes, getFileExtension(fileName));
+            
+            logger.info("✅ Изображение обработано: {}x{}, {} bytes, сжатие: {:.1f}%", 
+                processedImage.getWidth(), processedImage.getHeight(), 
+                processedImage.getFileSize(), processedImage.getCompressionRatio());
+            
+            // Анализируем обработанное изображение
+            return analyzeFoodImage(processedImage.getBase64Data());
+            
+        } catch (Exception e) {
+            logger.error("❌ Ошибка при обработке изображения: {}", e.getMessage(), e);
+            return createErrorAnalysis("Ошибка обработки изображения: " + e.getMessage());
+        }
+    }
+    
+    /**
+     * Извлекает расширение файла
+     */
+    private String getFileExtension(String fileName) {
+        if (fileName == null || !fileName.contains(".")) {
+            return "jpg";
+        }
+        return fileName.substring(fileName.lastIndexOf(".") + 1).toLowerCase();
     }
 
     /**
@@ -267,19 +336,69 @@ public class OpenAIService {
     }
 
     /**
-     * Извлекает JSON из ответа OpenAI
+     * Извлекает JSON из ответа OpenAI (улучшенная версия)
      */
     private String extractJsonFromResponse(String response) {
+        // Удаляем лишние символы и пробелы
+        response = response.trim();
+        
         // Ищем JSON блок в ответе
         int startIndex = response.indexOf("{");
         int endIndex = response.lastIndexOf("}");
         
         if (startIndex != -1 && endIndex != -1 && endIndex > startIndex) {
-            return response.substring(startIndex, endIndex + 1);
+            String json = response.substring(startIndex, endIndex + 1);
+            
+            // Очищаем JSON от возможных markdown блоков
+            json = json.replace("```json", "").replace("```", "").trim();
+            
+            return json;
         }
         
         // Если не нашли JSON, возвращаем весь ответ
-        return response;
+        return response.replace("```json", "").replace("```", "").trim();
+    }
+    
+    /**
+     * Валидирует результат анализа питания
+     */
+    private boolean isValidAnalysis(NutritionAnalysis analysis) {
+        if (analysis == null) {
+            return false;
+        }
+        
+        // Проверяем что основные поля заполнены
+        if (analysis.getTotalCalories() == null || analysis.getTotalCalories() < 0) {
+            logger.warn("Некорректные калории: {}", analysis.getTotalCalories());
+            return false;
+        }
+        
+        if (analysis.getTotalCalories() > 5000) {
+            logger.warn("Слишком много калорий: {}", analysis.getTotalCalories());
+            return false;
+        }
+        
+        if (analysis.getConfidenceLevel() == null || 
+            analysis.getConfidenceLevel() < 0 || analysis.getConfidenceLevel() > 1) {
+            logger.warn("Некорректный уровень уверенности: {}", analysis.getConfidenceLevel());
+            return false;
+        }
+        
+        if (analysis.getDetectedFoods() == null || analysis.getDetectedFoods().isEmpty()) {
+            logger.warn("Не обнаружено продуктов в анализе");
+            return false;
+        }
+        
+        // Проверяем БЖУ
+        if (analysis.getTotalProteins() == null || analysis.getTotalProteins() < 0 ||
+            analysis.getTotalFats() == null || analysis.getTotalFats() < 0 ||
+            analysis.getTotalCarbs() == null || analysis.getTotalCarbs() < 0) {
+            logger.warn("Некорректные БЖУ: P={}, F={}, C={}", 
+                analysis.getTotalProteins(), analysis.getTotalFats(), analysis.getTotalCarbs());
+            return false;
+        }
+        
+        return true;
     }
 
     /**

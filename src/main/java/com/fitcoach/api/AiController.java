@@ -55,12 +55,10 @@ public class AiController {
                     .body(Map.of("error", "Файл должен быть изображением", "success", false));
             }
             
-            // Конвертируем в base64
+            // Анализируем с предварительной обработкой изображения
             byte[] imageBytes = photo.getBytes();
-            String base64Image = Base64.getEncoder().encodeToString(imageBytes);
-            
-            // Анализируем через OpenAI
-            NutritionAnalysis analysis = openAIService.analyzeFoodImage(base64Image);
+            NutritionAnalysis analysis = openAIService.analyzeFoodImageFromBytes(
+                imageBytes, photo.getOriginalFilename());
             
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);
