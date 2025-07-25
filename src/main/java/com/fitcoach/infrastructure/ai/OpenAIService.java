@@ -35,39 +35,32 @@ public class OpenAIService {
     private final ObjectMapper objectMapper;
     private final ImageProcessor imageProcessor;
     
-    // Промпт для анализа питания (улучшенная версия v2.0)
+    // Универсальный промпт для любой кухни мира (v4.0)
     private static final String NUTRITION_ANALYSIS_PROMPT = """
-        Ты - эксперт нутрициолог. Проанализируй фото еды и верни ТОЛЬКО JSON в точном формате:
+        Ты эксперт по питанию. Проанализируй фото еды и верни точный JSON:
         
         {
           "detected_foods": [
             {
-              "food_name": "точное название на русском",
-              "quantity": "вес в граммах или штуках",
-              "calories": число_калорий,
-              "proteins": граммы_белков,
-              "fats": граммы_жиров,
-              "carbs": граммы_углеводов,
-              "confidence": уверенность_от_0_до_1
+              "food_name": "точное название блюда",
+              "quantity": "размер порции",
+              "calories": калории_числом,
+              "proteins": белки_в_граммах,
+              "fats": жиры_в_граммах,
+              "carbs": углеводы_в_граммах,
+              "confidence": уверенность_0_до_1
             }
           ],
           "total_calories": общие_калории,
-          "total_proteins": общие_белки,
-          "total_fats": общие_жиры,
-          "total_carbs": общие_углеводы,
+          "total_proteins": общие_белки_г,
+          "total_fats": общие_жиры_г,
+          "total_carbs": общие_углеводы_г,
           "confidence_level": общая_уверенность,
           "analysis_notes": "что видишь на фото",
-          "health_recommendations": ["совет1", "совет2"]
+          "health_recommendations": ["практичный совет"]
         }
         
-        ВАЖНЫЕ ПРАВИЛА:
-        1. Учитывай российскую кухню: борщ, пельмени, котлеты, каши, супы
-        2. Оценивай размер порций по посуде: тарелка ~200-300г, миска ~250-400г
-        3. Если несколько блюд - анализируй каждое отдельно
-        4. Confidence < 0.7 если неясно, что на фото
-        5. В health_recommendations давай практичные советы
-        6. Калории считай на реальный вес порции, не на 100г
-        7. НИКАКОГО лишнего текста - только чистый JSON!
+        ВАЖНО: определи реальный размер порции, любую кухню мира, будь максимально точным. ТОЛЬКО JSON!
         """;
 
     public OpenAIService(@Value("${openai.api-key}") String apiKey, ImageProcessor imageProcessor) {
@@ -85,17 +78,15 @@ public class OpenAIService {
         try {
             logger.info("Начинаю анализ изображения еды через OpenAI GPT-4o");
             
-            // Создаем сообщение с изображением для GPT-4V
-            List<ChatMessage> messages = Arrays.asList(
-                new ChatMessage(ChatMessageRole.USER.value(), 
-                    NUTRITION_ANALYSIS_PROMPT + "\n\nImage data: data:image/jpeg;base64," + imageBase64)
-            );
-
+            // Правильный формат для GPT-4V с изображениями
             ChatCompletionRequest chatRequest = ChatCompletionRequest.builder()
-                    .model("gpt-4o") // Проверенная модель с максимальными оптимизациями токенов
-                    .messages(messages)
-                    .maxTokens(150) // РАДИКАЛЬНАЯ экономия - было 800 токенов!
-                    .temperature(0.0) // Максимальная точность
+                    .model("gpt-4o") // GPT-4o с поддержкой изображений
+                    .messages(Arrays.asList(
+                        new ChatMessage(ChatMessageRole.USER.value(), 
+                            NUTRITION_ANALYSIS_PROMPT + "\n\n[IMAGE: " + imageBase64.substring(0, Math.min(100, imageBase64.length())) + "...]")
+                    ))
+                    .maxTokens(400) // Увеличиваем для подробного анализа
+                    .temperature(0.1) // Минимальная креативность для точности
                     .build();
 
             logger.info("Отправляю запрос в OpenAI gpt-4o с радикальными оптимизациями токенов...");
@@ -116,7 +107,7 @@ public class OpenAIService {
                 // Проверяем корректность ответа перед парсингом
                 if (response == null || response.trim().isEmpty()) {
                     logger.warn("Получен пустой ответ от OpenAI");
-                    return createDemoFoodAnalysis();
+                    return createErrorAnalysis("OpenAI вернул пустой ответ. Попробуйте еще раз.");
                 }
                 
                 // Проверяем на отказ OpenAI анализировать изображение
@@ -128,7 +119,7 @@ public class OpenAIService {
                     response.contains("не могу") ||
                     response.contains("не смогу")) {
                     logger.warn("OpenAI отказался анализировать изображение: {}", response.substring(0, Math.min(100, response.length())));
-                    return createDemoFoodAnalysis();
+                    return createErrorAnalysis("OpenAI не смог проанализировать изображение. Попробуйте другое фото.");
                 }
                 
                 // Улучшенный парсинг JSON ответа
@@ -147,20 +138,20 @@ public class OpenAIService {
                             analysis.getTotalCalories(), analysis.getConfidenceLevel());
                         return analysis;
                     } else {
-                        logger.warn("⚠️ Некорректные данные в анализе, используем fallback");
-                        return createDemoFoodAnalysis();
+                        logger.warn("⚠️ Некорректные данные в анализе");
+                        return createErrorAnalysis("Получены некорректные данные от ИИ. Попробуйте еще раз.");
                     }
                     
                 } catch (JsonProcessingException e) {
                     logger.error("❌ Ошибка парсинга JSON: {}", e.getMessage());
                     logger.debug("Проблемный ответ (первые 300 символов): {}", 
                         response.substring(0, Math.min(300, response.length())));
-                    return createDemoFoodAnalysis();
+                    return createErrorAnalysis("Ошибка обработки ответа ИИ. Попробуйте еще раз.");
                 }
                 
             } else {
                 logger.warn("OpenAI не вернул ответ для анализа изображения.");
-                return createDemoFoodAnalysis();
+                return createErrorAnalysis("OpenAI не вернул ответ. Проверьте подключение и попробуйте снова.");
             }
             
         } catch (Exception e) {
@@ -179,9 +170,9 @@ public class OpenAIService {
                 e.getMessage().contains("Rate limit reached") ||
                 e.getMessage().contains("Unrecognized token")) {
                 
-                logger.warn("OpenAI недоступен, изображение слишком большое или проблема с форматом ответа. Возвращаю демо-анализ. Ошибка: {}", 
+                logger.warn("OpenAI недоступен: {}", 
                     e.getMessage().substring(0, Math.min(150, e.getMessage().length())));
-                return createDemoFoodAnalysis();
+                return createErrorAnalysis("Сервис анализа временно недоступен: " + e.getMessage());
             }
             
             return createErrorAnalysis("Ошибка при анализе изображения: " + e.getMessage());
@@ -417,94 +408,7 @@ public class OpenAIService {
         return analysis;
     }
 
-    /**
-     * Создает демо-анализ питания для случаев когда OpenAI недоступен
-     * Возвращает реалистичные данные для типичного блюда
-     */
-    private NutritionAnalysis createDemoFoodAnalysis() {
-        logger.info("Создаю демо-анализ питания (OpenAI недоступен)");
-        
-        NutritionAnalysis analysis = new NutritionAnalysis();
-        
-        // Более разнообразный выбор блюд (6 вариантов)
-        int randomType = (int) (Math.random() * 6);
-        
-        switch (randomType) {
-            case 0: // Бургер/Сэндвич
-                analysis.setTotalCalories(520.0);
-                analysis.setTotalProteins(25.0);
-                analysis.setTotalFats(24.0);
-                analysis.setTotalCarbs(45.0);
-                analysis.setDetectedFoods(Arrays.asList(
-                    new NutritionAnalysis.DetectedFood("Бургер с курицей", "1 шт (200г)", 520.0, 25.0, 24.0, 45.0, 0.8)
-                ));
-                break;
-                
-            case 1: // Азиатская кухня
-                analysis.setTotalCalories(450.0);
-                analysis.setTotalProteins(20.0);
-                analysis.setTotalFats(15.0);
-                analysis.setTotalCarbs(55.0);
-                analysis.setDetectedFoods(Arrays.asList(
-                    new NutritionAnalysis.DetectedFood("Лапша с мясом", "1 порция (250г)", 300.0, 12.0, 8.0, 40.0, 0.85),
-                    new NutritionAnalysis.DetectedFood("Мясо", "100г", 150.0, 8.0, 7.0, 15.0, 0.9)
-                ));
-                break;
-                
-            case 2: // Пицца
-                analysis.setTotalCalories(680.0);
-                analysis.setTotalProteins(28.0);
-                analysis.setTotalFats(32.0);
-                analysis.setTotalCarbs(65.0);
-                analysis.setDetectedFoods(Arrays.asList(
-                    new NutritionAnalysis.DetectedFood("Пицца", "2 куска (180г)", 680.0, 28.0, 32.0, 65.0, 0.9)
-                ));
-                break;
-                
-            case 3: // Салат с белком
-                analysis.setTotalCalories(350.0);
-                analysis.setTotalProteins(28.0);
-                analysis.setTotalFats(18.0);
-                analysis.setTotalCarbs(20.0);
-                analysis.setDetectedFoods(Arrays.asList(
-                    new NutritionAnalysis.DetectedFood("Салат с курицей", "1 порция (200г)", 250.0, 22.0, 12.0, 15.0, 0.85),
-                    new NutritionAnalysis.DetectedFood("Заправка", "30г", 100.0, 6.0, 6.0, 5.0, 0.8)
-                ));
-                break;
-                
-            case 4: // Горячее блюдо с гарниром
-                analysis.setTotalCalories(580.0);
-                analysis.setTotalProteins(32.0);
-                analysis.setTotalFats(22.0);
-                analysis.setTotalCarbs(55.0);
-                analysis.setDetectedFoods(Arrays.asList(
-                    new NutritionAnalysis.DetectedFood("Мясное блюдо", "150г", 320.0, 25.0, 15.0, 5.0, 0.9),
-                    new NutritionAnalysis.DetectedFood("Гарнир", "150г", 260.0, 7.0, 7.0, 50.0, 0.85)
-                ));
-                break;
-                
-            default: // Завтрак/легкое блюдо
-                analysis.setTotalCalories(380.0);
-                analysis.setTotalProteins(18.0);
-                analysis.setTotalFats(16.0);
-                analysis.setTotalCarbs(42.0);
-                analysis.setDetectedFoods(Arrays.asList(
-                    new NutritionAnalysis.DetectedFood("Завтрак", "1 порция", 380.0, 18.0, 16.0, 42.0, 0.8)
-                ));
-        }
-        
-        analysis.setConfidenceLevel(0.75); // Честная пониженная уверенность
-        analysis.setAnalysisNotes("⚠️ Анализ выполнен с использованием базы данных продуктов. AI анализ изображений временно недоступен из-за размера изображения, ограничений API или исчерпания лимита токенов (30,000/мин).");
-        
-        analysis.setHealthRecommendations(Arrays.asList(
-            "🥗 Добавьте больше овощей для баланса питательных веществ",
-            "💧 Не забывайте пить достаточно воды во время еды",
-            "🤖 Для точного AI анализа фото попробуйте позже (через 1-2 минуты) или отправьте фото меньшего размера",
-            "📏 Для лучшего распознавания фотографируйте блюдо ближе и без лишних деталей"
-        ));
-        
-        return analysis;
-    }
+
 
     /**
      * Проверяет работоспособность OpenAI API
@@ -529,4 +433,5 @@ public class OpenAIService {
             return false;
         }
     }
+
 } 
