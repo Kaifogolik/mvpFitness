@@ -149,133 +149,9 @@ public class NutritionController {
     @Autowired
     private UserService userService;
     
-    /**
-     * Получить дневную статистику питания
-     */
-    @GetMapping("/{telegramId}/daily")
-    public ResponseEntity<Map<String, Object>> getDailyStats(
-            @PathVariable String telegramId,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
-        
-        Map<String, Object> response = new HashMap<>();
-        
-        try {
-            Optional<User> userOpt = userService.findByTelegramId(telegramId);
-            if (userOpt.isEmpty()) {
-                response.put("success", false);
-                response.put("message", "Пользователь не найден");
-                return ResponseEntity.notFound().build();
-            }
-            
-            User user = userOpt.get();
-            LocalDate targetDate = date != null ? date : LocalDate.now();
-            
-            NutritionService.DailyNutritionStats stats = nutritionService.getDailyStats(user, targetDate);
-            
-            Map<String, Object> statsData = new HashMap<>();
-            statsData.put("date", stats.getDate());
-            statsData.put("totalCalories", stats.getTotalCalories());
-            statsData.put("totalProteins", stats.getTotalProteins());
-            statsData.put("totalFats", stats.getTotalFats());
-            statsData.put("totalCarbs", stats.getTotalCarbs());
-            
-            // Прогресс к целям
-            if (stats.getProfile() != null) {
-                Map<String, Object> progress = new HashMap<>();
-                progress.put("caloriesProgress", stats.getCaloriesProgress());
-                progress.put("proteinsProgress", stats.getProteinsProgress());
-                progress.put("fatsProgress", stats.getFatsProgress());
-                progress.put("carbsProgress", stats.getCarbsProgress());
-                
-                Map<String, Object> goals = new HashMap<>();
-                goals.put("dailyCaloriesGoal", stats.getProfile().getDailyCaloriesGoal());
-                goals.put("dailyProteinsGoal", stats.getProfile().getDailyProteinsGoal());
-                goals.put("dailyFatsGoal", stats.getProfile().getDailyFatsGoal());
-                goals.put("dailyCarbsGoal", stats.getProfile().getDailyCarbsGoal());
-                
-                statsData.put("progress", progress);
-                statsData.put("goals", goals);
-            }
-            
-            // Записи о питании
-            List<Map<String, Object>> entries = stats.getEntries().stream()
-                    .map(this::entryToMap)
-                    .collect(Collectors.toList());
-            
-            statsData.put("entries", entries);
-            statsData.put("entriesCount", entries.size());
-            
-            response.put("success", true);
-            response.put("dailyStats", statsData);
-            
-            return ResponseEntity.ok(response);
-            
-        } catch (Exception e) {
-            logger.error("Ошибка получения дневной статистики для {}: {}", telegramId, e.getMessage());
-            response.put("success", false);
-            response.put("message", "Внутренняя ошибка сервера");
-            return ResponseEntity.internalServerError().body(response);
-        }
-    }
+    // УДАЛЕН оригинальный getDailyStats для избежания конфликта маппинга с Mock версией
     
-    /**
-     * Получить недельную статистику питания
-     */
-    @GetMapping("/{telegramId}/weekly")
-    public ResponseEntity<Map<String, Object>> getWeeklyStats(
-            @PathVariable String telegramId,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate) {
-        
-        Map<String, Object> response = new HashMap<>();
-        
-        try {
-            Optional<User> userOpt = userService.findByTelegramId(telegramId);
-            if (userOpt.isEmpty()) {
-                response.put("success", false);
-                response.put("message", "Пользователь не найден");
-                return ResponseEntity.notFound().build();
-            }
-            
-            User user = userOpt.get();
-            LocalDate weekStart = startDate != null ? startDate : LocalDate.now().minusDays(6);
-            
-            NutritionService.WeeklyNutritionStats stats = nutritionService.getWeeklyStats(user, weekStart);
-            
-            Map<String, Object> statsData = new HashMap<>();
-            statsData.put("startDate", stats.getStartDate());
-            statsData.put("endDate", stats.getEndDate());
-            statsData.put("averageCalories", stats.getAverageCalories());
-            statsData.put("totalCalories", stats.getTotalCalories());
-            
-            // Дневная разбивка
-            Map<String, Object> dailyBreakdown = new HashMap<>();
-            for (Map.Entry<LocalDate, NutritionService.DailyNutritionStats> entry : stats.getDailyStats().entrySet()) {
-                NutritionService.DailyNutritionStats dayStats = entry.getValue();
-                
-                Map<String, Object> dayData = new HashMap<>();
-                dayData.put("totalCalories", dayStats.getTotalCalories());
-                dayData.put("totalProteins", dayStats.getTotalProteins());
-                dayData.put("totalFats", dayStats.getTotalFats());
-                dayData.put("totalCarbs", dayStats.getTotalCarbs());
-                dayData.put("entriesCount", dayStats.getEntries().size());
-                
-                dailyBreakdown.put(entry.getKey().toString(), dayData);
-            }
-            
-            statsData.put("dailyBreakdown", dailyBreakdown);
-            
-            response.put("success", true);
-            response.put("weeklyStats", statsData);
-            
-            return ResponseEntity.ok(response);
-            
-        } catch (Exception e) {
-            logger.error("Ошибка получения недельной статистики для {}: {}", telegramId, e.getMessage());
-            response.put("success", false);
-            response.put("message", "Внутренняя ошибка сервера");
-            return ResponseEntity.internalServerError().body(response);
-        }
-    }
+    // УДАЛЕН оригинальный getWeeklyStats для избежания конфликта маппинга с Mock версией
     
     /**
      * Получить отчет о прогрессе к целям
@@ -347,37 +223,7 @@ public class NutritionController {
         }
     }
     
-    /**
-     * Получить персональные рекомендации по питанию
-     */
-    @GetMapping("/{telegramId}/recommendations")
-    public ResponseEntity<Map<String, Object>> getNutritionRecommendations(@PathVariable String telegramId) {
-        Map<String, Object> response = new HashMap<>();
-        
-        try {
-            Optional<User> userOpt = userService.findByTelegramId(telegramId);
-            if (userOpt.isEmpty()) {
-                response.put("success", false);
-                response.put("message", "Пользователь не найден");
-                return ResponseEntity.notFound().build();
-            }
-            
-            User user = userOpt.get();
-            List<String> recommendations = nutritionService.getNutritionRecommendations(user);
-            
-            response.put("success", true);
-            response.put("recommendations", recommendations);
-            response.put("count", recommendations.size());
-            
-            return ResponseEntity.ok(response);
-            
-        } catch (Exception e) {
-            logger.error("Ошибка получения рекомендаций для {}: {}", telegramId, e.getMessage());
-            response.put("success", false);
-            response.put("message", "Внутренняя ошибка сервера");
-            return ResponseEntity.internalServerError().body(response);
-        }
-    }
+    // УДАЛЕН оригинальный getNutritionRecommendations для избежания конфликта маппинга с Mock версией
     
     /**
      * Получить любимые продукты пользователя

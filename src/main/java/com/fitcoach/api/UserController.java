@@ -77,75 +77,7 @@ public class UserController {
     @Autowired
     private UserProfileRepository userProfileRepository;
     
-    /**
-     * Получить профиль пользователя по Telegram ID
-     */
-    @GetMapping("/{telegramId}/profile")
-    public ResponseEntity<Map<String, Object>> getUserProfile(@PathVariable String telegramId) {
-        Map<String, Object> response = new HashMap<>();
-        
-        try {
-            Optional<UserService.UserWithProfile> userWithProfile = userService.getUserWithProfile(telegramId);
-            
-            if (userWithProfile.isEmpty()) {
-                response.put("success", false);
-                response.put("message", "Пользователь не найден");
-                return ResponseEntity.notFound().build();
-            }
-            
-            UserService.UserWithProfile uwp = userWithProfile.get();
-            
-            // Информация о пользователе
-            Map<String, Object> userData = new HashMap<>();
-            userData.put("id", uwp.getUser().getId());
-            userData.put("telegramId", uwp.getUser().getTelegramId());
-            userData.put("username", uwp.getUser().getUsername());
-            userData.put("firstName", uwp.getUser().getFirstName());
-            userData.put("lastName", uwp.getUser().getLastName());
-            userData.put("createdAt", uwp.getUser().getCreatedAt());
-            userData.put("lastActiveAt", uwp.getUser().getLastActiveAt());
-            
-            response.put("success", true);
-            response.put("user", userData);
-            response.put("hasProfile", uwp.hasProfile());
-            
-            if (uwp.hasProfile()) {
-                UserProfile profile = uwp.getProfile();
-                
-                Map<String, Object> profileData = new HashMap<>();
-                profileData.put("id", profile.getId());
-                profileData.put("age", profile.getAge());
-                profileData.put("weight", profile.getWeight());
-                profileData.put("height", profile.getHeight());
-                profileData.put("gender", profile.getGender());
-                profileData.put("activityLevel", profile.getActivityLevel());
-                profileData.put("fitnessGoal", profile.getFitnessGoal());
-                
-                // Целевые показатели
-                profileData.put("dailyCaloriesGoal", profile.getDailyCaloriesGoal());
-                profileData.put("dailyProteinsGoal", profile.getDailyProteinsGoal());
-                profileData.put("dailyFatsGoal", profile.getDailyFatsGoal());
-                profileData.put("dailyCarbsGoal", profile.getDailyCarbsGoal());
-                
-                // Настройки
-                profileData.put("notificationsEnabled", profile.getNotificationsEnabled());
-                profileData.put("trackingEnabled", profile.getTrackingEnabled());
-                
-                profileData.put("createdAt", profile.getCreatedAt());
-                profileData.put("updatedAt", profile.getUpdatedAt());
-                
-                response.put("profile", profileData);
-            }
-            
-            return ResponseEntity.ok(response);
-            
-        } catch (Exception e) {
-            logger.error("Ошибка получения профиля пользователя {}: {}", telegramId, e.getMessage());
-            response.put("success", false);
-            response.put("message", "Внутренняя ошибка сервера");
-            return ResponseEntity.internalServerError().body(response);
-        }
-    }
+    // УДАЛЕН оригинальный getUserProfile для избежания конфликта маппинга с Mock версией
     
     /**
      * Создать или обновить профиль пользователя
