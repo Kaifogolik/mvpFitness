@@ -1,0 +1,123 @@
+# mvpFitness Backend Configuration Example
+# Copy this file to config.properties and fill in your actual values
+
+# ================================================
+# AI Services Configuration
+# ================================================
+
+# DeepSeek API (Primary LLM for cost optimization)
+DEEPSEEK_API_KEY=your_deepseek_api_key_here
+DEEPSEEK_BASE_URL=https://api.deepseek.com
+
+# Gemini API (Secondary LLM)
+GEMINI_API_KEY=your_gemini_api_key_here
+
+# OpenAI API (Fallback only)
+OPENAI_API_KEY=your_openai_api_key_here
+
+# ================================================
+# Nutrition API Configuration  
+# ================================================
+
+# FatSecret API (Free tier: 500 requests/day)
+FATSECRET_CLIENT_ID=your_fatsecret_client_id
+FATSECRET_CLIENT_SECRET=your_fatsecret_client_secret
+
+# ================================================
+# Telegram Bot Configuration
+# ================================================
+
+# Get these from @BotFather on Telegram
+TELEGRAM_BOT_TOKEN=your_telegram_bot_token
+TELEGRAM_BOT_USERNAME=your_bot_username
+
+# ================================================
+# Database Configuration
+# ================================================
+
+# PostgreSQL (Production)
+DATABASE_URL=postgresql://username:password@localhost:5432/mvpfitness
+DATABASE_USERNAME=mvpfitness_user
+DATABASE_PASSWORD=secure_password
+
+# H2 Database (Development - embedded)
+# No configuration needed for H2
+
+# ================================================
+# Redis Configuration
+# ================================================
+
+# Redis for caching and sessions
+REDIS_HOST=localhost
+REDIS_PORT=6379
+REDIS_PASSWORD=
+REDIS_DATABASE=0
+
+# ================================================
+# Security Configuration
+# ================================================
+
+# JWT Secret (generate a strong random string)
+JWT_SECRET=your_very_long_random_jwt_secret_at_least_32_characters
+
+# CORS allowed origins (comma separated)
+CORS_ALLOWED_ORIGINS=http://localhost:3000,http://localhost:5173
+
+# ================================================
+# Application Configuration
+# ================================================
+
+# Server configuration
+SERVER_PORT=8080
+SERVER_CONTEXT_PATH=/
+
+# Logging level
+LOGGING_LEVEL=INFO
+
+# Profile (development, production)
+SPRING_PROFILES_ACTIVE=development
+
+# ================================================
+# File Upload Configuration
+# ================================================
+
+# Maximum file size for image uploads (in MB)
+MAX_FILE_SIZE=10
+MAX_REQUEST_SIZE=10
+
+# ================================================
+# Computer Vision Configuration
+# ================================================
+
+# EfficientNet model path (when implemented)
+VISION_MODEL_PATH=/models/efficientnet-b0
+
+# Image processing settings
+MAX_IMAGE_WIDTH=1024
+MAX_IMAGE_HEIGHT=1024
+IMAGE_QUALITY=0.8
+
+# ================================================
+# Cache Configuration
+# ================================================
+
+# Cache TTL in seconds
+NUTRITION_CACHE_TTL=86400
+AI_RESPONSE_CACHE_TTL=3600
+VISION_CACHE_TTL=7200
+
+# ================================================
+# Rate Limiting
+# ================================================
+
+# Requests per minute per user
+RATE_LIMIT_PER_MINUTE=60
+BURST_CAPACITY=10
+
+# ================================================
+# Monitoring & Health Checks
+# ================================================
+
+# Actuator endpoints
+MANAGEMENT_ENDPOINTS_ENABLED=true
+MANAGEMENT_HEALTH_SHOW_DETAILS=when_authorized 
