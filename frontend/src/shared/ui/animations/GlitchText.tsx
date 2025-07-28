@@ -8,8 +8,8 @@ const GlitchText: React.FC<GlitchTextProps> = ({
   enableOnHover = false,
   glitchIntensity = 'medium',
   colors = {
-    primary: '#8B5CF6',
-    secondary: '#F97316',
+    primary: 'rgb(139, 92, 246)', // theme primary-500
+    secondary: 'rgb(249, 115, 22)', // theme secondary-500
   },
   autoPlay = false,
   playDuration = 3000,

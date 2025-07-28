@@ -60,10 +60,10 @@ const HomePage: React.FC = () => {
   ]
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-neutral-50 via-white to-primary-50">
+    <div className="min-h-screen">
       {/* Hero Section */}
       <section className="relative py-20 px-6 text-center overflow-hidden">
-        <div className="absolute inset-0 bg-mesh opacity-30"></div>
+        {/* Background handled by Background component */}
         
         <MotionSlideIn direction="up" delay={0.1}>
           <div className="relative z-10 max-w-4xl mx-auto">
@@ -80,17 +80,19 @@ const HomePage: React.FC = () => {
               text="mvpFitness"
               className="text-5xl md:text-7xl font-black text-gradient-primary mb-6 block"
               splitType="chars"
-              delay={300}
-              stagger={0.08}
-              duration={0.6}
+              delay={0}
+              stagger={0.15}
+              duration={1.0}
+              triggerOnScroll={false}
             />
             
             <BlurText 
               text="Премиальная AI-платформа для фитнеса с анализом фото еды и персональным тренером нового поколения"
               className="text-xl md:text-2xl text-neutral-600 mb-8 max-w-3xl mx-auto block"
               direction="bottom"
-              delay={800}
-              duration={0.8}
+              delay={2000}
+              duration={1.2}
+              triggerOnScroll={false}
             />
             
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -198,7 +200,7 @@ const HomePage: React.FC = () => {
       </section>
 
       {/* Demo Section */}
-      <section className="py-16 px-6 bg-neutral-50">
+      <section className="py-16 px-6">
         <div className="max-w-4xl mx-auto text-center">
           <MotionSlideIn direction="up" delay={0.5}>
             <h2 className="text-3xl font-bold text-gradient-primary mb-6">

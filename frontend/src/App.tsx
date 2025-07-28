@@ -2,7 +2,7 @@ import React, { Suspense } from 'react'
 import { Routes, Route } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import Navbar from './layout/Navbar'
-import { LoadingSpinner } from './shared/ui/LoadingSpinner'
+import { LoadingSpinner, Background } from './shared/ui'
 
 // Lazy load pages for better performance
 const HomePage = React.lazy(() => import('./features/dashboard/components/HomePage'))
@@ -81,7 +81,7 @@ const pageTransition = {
 function App() {
   return (
     <ErrorBoundary>
-      <div className="min-h-screen bg-gradient-to-br from-neutral-50 via-white to-primary-50 dark:from-neutral-950 dark:via-neutral-900 dark:to-neutral-800">
+      <Background>
         <Navbar />
         
         <main className="pt-16"> {/* Account for fixed navbar */}
@@ -185,11 +185,11 @@ function App() {
                     </div>
                   </motion.div>
                 } />
-              </Routes>
-            </Suspense>
-          </AnimatePresence>
-        </main>
-      </div>
+                          </Routes>
+          </Suspense>
+        </AnimatePresence>
+      </main>
+    </Background>
     </ErrorBoundary>
   )
 }

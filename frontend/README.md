@@ -1,6 +1,6 @@
-# React + TypeScript + Vite
+# mvpFitness Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Премиальный фронтенд на React 19 + TypeScript 5.5 с современными анимациями и дизайном.
 
 Currently, two official plugins are available:
 
@@ -67,3 +67,54 @@ export default tseslint.config([
   },
 ])
 ```
+
+## 🎨 Background Component
+
+Универсальный Background компонент с живыми градиентами и анимированными формами.
+
+### Использование
+
+```tsx
+import { Background } from './shared/ui'
+
+// Базовое использование
+<Background>
+  <YourContent />
+</Background>
+
+// С настройками
+<Background 
+  variant="animated"
+  animate={true}
+  opacity={0.9}
+  overlayChildren={true}
+>
+  <YourContent />
+</Background>
+```
+
+### Варианты (Variants)
+
+- **default** - Адаптивный градиент (light/dark режимы)
+- **dark** - Темный режим с фиолетовыми тонами
+- **minimal** - Минимальный светлый градиент
+- **animated** - Анимированный градиент primary → secondary
+
+### Пропсы
+
+| Prop | Type | Default | Описание |
+|------|------|---------|----------|
+| `variant` | string | 'default' | Вариант фонового стиля |
+| `opacity` | number | 1 | Прозрачность фона |
+| `animate` | boolean | true | Включить анимации |
+| `overlayChildren` | boolean | false | Glassmorphism для детей |
+| `className` | string | - | Дополнительные CSS классы |
+
+### Особенности
+
+- 🎨 **Живые градиенты** - плавные переходы цветов
+- 🌊 **Анимированные орбы** - floating элементы
+- 🌓 **Dark Mode** - автоматическая адаптация
+- 📱 **Адаптивность** - корректно на всех устройствах
+- ⚡ **Performance** - 60fps анимации
+- 🎭 **Glassmorphism** - современные эффекты

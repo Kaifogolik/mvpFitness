@@ -5,6 +5,7 @@ export { MotionSlideIn, StaggerContainer, withSlideIn, type MotionSlideInProps }
 export { GradientCard, type GradientCardProps } from './GradientCard'
 export { NutrientBadge, type NutrientBadgeProps, type NutrientType } from './NutrientBadge'
 export { GlassModal, type GlassModalProps } from './GlassModal'
+export { default as Background, type BackgroundProps } from './Background'
 
 // Animation Components
 export {
