@@ -33,7 +33,7 @@ class ErrorBoundary extends React.Component<
     if (this.state.hasError) {
       return (
         <motion.div 
-          className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-500 to-orange-500"
+          className="min-h-screen flex items-center justify-center bg-gradient-primary"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
         >
@@ -42,7 +42,7 @@ class ErrorBoundary extends React.Component<
             <p className="text-xl mb-6">Пожалуйста, перезагрузите страницу</p>
             <button 
               onClick={() => window.location.reload()}
-              className="bg-white text-purple-600 px-6 py-3 rounded-lg font-bold hover:bg-gray-100 transition-colors"
+              className="bg-white text-primary-600 px-6 py-3 rounded-lg font-bold hover:bg-neutral-50 transition-colors"
             >
               Перезагрузить
             </button>
@@ -176,7 +176,7 @@ function App() {
                       </p>
                       <motion.button
                         onClick={() => window.history.back()}
-                        className="bg-gradient-to-r from-purple-500 to-orange-500 text-white px-8 py-3 rounded-lg font-bold hover:from-purple-600 hover:to-orange-600 transition-all transform hover:scale-105"
+                        className="bg-gradient-primary text-white px-8 py-3 rounded-lg font-bold hover:shadow-glow-lg transition-all"
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
                       >

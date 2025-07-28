@@ -8,18 +8,19 @@ export default {
   theme: {
     extend: {
       colors: {
-        // Premium Fitness Brand Colors 2025
+        // mvpFitness Brand Colors 2025 - Unified Design System
         primary: {
           50: '#faf5ff',
           100: '#f3e8ff',
           200: '#e9d5ff',
           300: '#d8b4fe',
           400: '#c084fc',
-          500: '#a855f7', // Main brand
+          500: '#a855f7', // Main brand purple
           600: '#9333ea',
           700: '#7c3aed',
           800: '#6b21a8',
           900: '#581c87',
+          950: '#4c1d95',
         },
         secondary: {
           50: '#fff7ed',
@@ -32,6 +33,7 @@ export default {
           700: '#c2410c',
           800: '#9a3412',
           900: '#7c2d12',
+          950: '#6b2710',
         },
         success: {
           50: '#f0fdf4',
@@ -44,6 +46,7 @@ export default {
           700: '#15803d',
           800: '#166534',
           900: '#14532d',
+          950: '#052e16',
         },
         neutral: {
           50: '#fafafa',
@@ -57,6 +60,17 @@ export default {
           800: '#262626',
           900: '#171717',
           950: '#0a0a0a',
+        },
+        // Brand specific colors for consistency
+        brand: {
+          background: {
+            light: '#fafafa',
+            dark: '#0a0a0a',
+          },
+          surface: {
+            light: '#ffffff',
+            dark: '#171717',
+          }
         }
       },
       fontFamily: {
@@ -87,6 +101,12 @@ export default {
         'xl': '0.75rem',
         '2xl': '1rem',
         '3xl': '1.5rem',
+        '4xl': '2rem',
+        // Brand specific radius
+        'brand-sm': '0.5rem',
+        'brand': '0.75rem',
+        'brand-lg': '1rem',
+        'brand-xl': '1.5rem',
       },
       animation: {
         'bounce-slow': 'bounce 3s infinite',
@@ -164,22 +184,29 @@ export default {
         'gradient-conic': 'conic-gradient(from 180deg at 50% 50%, var(--tw-gradient-stops))',
         'gradient-primary': 'linear-gradient(135deg, #8B5CF6 0%, #F97316 100%)',
         'gradient-secondary': 'linear-gradient(135deg, #F97316 0%, #EAB308 100%)',
-        'hero-pattern': "url('data:image/svg+xml,<svg width=\"60\" height=\"60\" viewBox=\"0 0 60 60\" xmlns=\"http://www.w3.org/2000/svg\"><g fill=\"none\" fill-rule=\"evenodd\"><g fill=\"%23A855F7\" fill-opacity=\"0.1\" fill-rule=\"nonzero\"><polygon points=\"36,34 6,34 6,6 36,6\"/></g></g></svg>')",
-        'mesh-gradient': 'radial-gradient(at 40% 20%, rgb(139, 92, 246) 0px, transparent 50%), radial-gradient(at 80% 0%, rgb(249, 115, 22) 0px, transparent 50%), radial-gradient(at 0% 50%, rgb(34, 197, 94) 0px, transparent 50%)',
       },
       backdropBlur: {
         xs: '2px',
       },
       boxShadow: {
-        'glow-sm': '0 0 10px rgba(168, 85, 247, 0.3)',
-        'glow': '0 0 20px rgba(168, 85, 247, 0.4)',
-        'glow-lg': '0 0 30px rgba(168, 85, 247, 0.5)',
-        'glow-orange': '0 0 20px rgba(249, 115, 22, 0.4)',
-        'glow-green': '0 0 20px rgba(34, 197, 94, 0.4)',
+        // Brand glow effects
+        'glow-sm': '0 0 10px rgb(168 85 247 / 0.3)',
+        'glow': '0 0 20px rgb(168 85 247 / 0.4)',
+        'glow-lg': '0 0 30px rgb(168 85 247 / 0.5)',
+        'glow-xl': '0 0 40px rgb(168 85 247 / 0.6)',
+        'glow-orange': '0 0 20px rgb(249 115 22 / 0.4)',
+        'glow-green': '0 0 20px rgb(34 197 94 / 0.4)',
+        // Glass morphism
         'glass': '0 8px 32px 0 rgba(31, 38, 135, 0.37)',
+        'glass-lg': '0 12px 40px 0 rgba(31, 38, 135, 0.4)',
+        // Neumorphism
         'neumorphism-inset': 'inset 2px 2px 5px #d1d9e6, inset -3px -3px 7px #ffffff',
         'neumorphism': '2px 2px 5px #d1d9e6, -3px -3px 7px #ffffff',
         'neumorphism-dark': '2px 2px 5px #0a0a0a, -3px -3px 7px #262626',
+        // Brand specific shadows
+        'brand-sm': '0 2px 8px rgb(0 0 0 / 0.05)',
+        'brand': '0 4px 16px rgb(0 0 0 / 0.1)',
+        'brand-lg': '0 8px 32px rgb(0 0 0 / 0.15)',
       },
       screens: {
         'xs': '475px',

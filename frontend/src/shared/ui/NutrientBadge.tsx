@@ -34,29 +34,29 @@ const NutrientBadge: React.FC<NutrientBadgeProps> = ({
       label: 'Калории',
       unit: 'ккал',
       icon: '🔥',
-      color: 'text-red-600 bg-red-50 border-red-200',
-      gradientColor: 'from-red-500 to-orange-500'
+      color: 'text-secondary-600 bg-secondary-50 border-secondary-200',
+      gradientColor: 'from-secondary-500 to-secondary-600'
     },
     protein: {
       label: 'Белки',
       unit: 'г',
       icon: '💪',
-      color: 'text-blue-600 bg-blue-50 border-blue-200',
-      gradientColor: 'from-blue-500 to-cyan-500'
+      color: 'text-primary-600 bg-primary-50 border-primary-200',
+      gradientColor: 'from-primary-500 to-primary-600'
     },
     carbs: {
       label: 'Углеводы',
       unit: 'г',
       icon: '🌾',
-      color: 'text-yellow-600 bg-yellow-50 border-yellow-200',
-      gradientColor: 'from-yellow-500 to-orange-500'
+      color: 'text-secondary-600 bg-secondary-50 border-secondary-200',
+      gradientColor: 'from-secondary-400 to-secondary-500'
     },
     fat: {
       label: 'Жиры',
       unit: 'г',
       icon: '🥑',
-      color: 'text-green-600 bg-green-50 border-green-200',
-      gradientColor: 'from-green-500 to-emerald-500'
+      color: 'text-success-600 bg-success-50 border-success-200',
+      gradientColor: 'from-success-500 to-success-600'
     },
     fiber: {
       label: 'Клетчатка',

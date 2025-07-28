@@ -5,8 +5,9 @@
 
 @layer base {
   body {
-    @apply bg-gradient-to-br from-neutral-50 via-white to-primary-50 text-neutral-900 font-sans antialiased;
+    @apply text-neutral-900 font-sans antialiased;
     min-height: 100vh;
+    /* Background handled by Background component */
   }
   
   html {
@@ -39,7 +40,8 @@
 
   /* Dark mode base */
   .dark body {
-    @apply bg-gradient-to-br from-neutral-950 via-neutral-900 to-neutral-800 text-neutral-100;
+    @apply text-neutral-100;
+    /* Background handled by Background component */
   }
 
   .dark ::-webkit-scrollbar-track {
