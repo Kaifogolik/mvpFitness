@@ -3,27 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FitCoach AI - Твой персональный фитнес-помощник</title>
-    <link rel="stylesheet" href="css/style.css">
+    <title>🔥 FitCoach AI - Твой персональный тренер</title>
+    <link rel="stylesheet" href="css/style.css?v=3.0">
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
-    <div class="app-container">
-        <!-- Header -->
+    <!-- 🎯 Красивый заголовок -->
         <header class="header">
-            <div class="header-content">
-                <div class="logo">
-                    <span class="logo-icon">🤖</span>
-                    <span class="logo-text">FitCoach AI</span>
-                </div>
-                <div class="user-info">
-                    <span class="user-name" id="userName">Loading...</span>
-                    <span class="user-status" id="userStatus">Student</span>
-                </div>
-            </div>
+        <h1>🔥 FitCoach AI</h1>
         </header>
 
-        <!-- Navigation -->
+    <!-- 🧭 Красивая навигация -->
         <nav class="nav-tabs">
             <button class="nav-tab active" data-tab="dashboard">
                 <span class="tab-icon">📊</span>
@@ -43,308 +34,656 @@
             </button>
         </nav>
 
-        <!-- Main Content -->
+    <!-- 📱 Основной контент -->
         <main class="main-content">
             
-            <!-- Dashboard Tab -->
+        <!-- 📊 Dashboard Tab -->
             <div class="tab-content active" id="dashboard">
                 <div class="stats-grid">
-                    <div class="stat-card">
+                <div class="stat-card sparkle">
                         <div class="stat-icon">🔥</div>
-                        <div class="stat-info">
-                            <div class="stat-value" id="todayCalories">0</div>
+                    <div class="stat-value" id="todayCalories">1251</div>
                             <div class="stat-label">Калории сегодня</div>
-                            <div class="progress-bar" id="caloriesProgress">
-                                <div class="progress-fill" style="width: 0%"></div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="stat-card">
-                        <div class="stat-icon">⚖️</div>
-                        <div class="stat-info">
-                            <div class="stat-value" id="currentWeight">--</div>
-                            <div class="stat-label">Текущий вес</div>
-                        </div>
-                    </div>
-                    
-                    <div class="stat-card">
-                        <div class="stat-icon">🎯</div>
-                        <div class="stat-info">
-                            <div class="stat-value" id="dailyGoal">2000</div>
-                            <div class="stat-label">Цель калорий</div>
-                        </div>
-                    </div>
-                    
-                    <div class="stat-card">
-                        <div class="stat-icon">📅</div>
-                        <div class="stat-info">
-                            <div class="stat-value" id="streakDays">1</div>
-                            <div class="stat-label">Дней подряд</div>
-                            <div class="progress-bar" id="streakProgress">
-                                <div class="progress-fill" style="width: 0%"></div>
-                            </div>
-                        </div>
+                    <div class="progress-bar" id="caloriesProgress">
+                        <div class="progress-fill" style="width: 62%"></div>
                     </div>
                 </div>
-
-                <div class="progress-chart">
-                    <h3>Прогресс за неделю</h3>
-                    <div class="chart-container">
-                        <canvas id="weeklyChart" width="350" height="200"></canvas>
-                    </div>
+                
+                <div class="stat-card">
+                    <div class="stat-icon">⚖️</div>
+                    <div class="stat-value" id="currentWeight">75 кг</div>
+                    <div class="stat-label">Текущий вес</div>
                 </div>
-
-                <div class="quick-actions">
-                    <h3>Быстрые действия</h3>
-                    <div class="action-buttons">
-                        <button class="action-btn" onclick="addFood()" id="addFoodBtn">
-                            <span>📸</span>
-                            Добавить еду
-                        </button>
-                        <button class="action-btn" onclick="addWeight()" id="addWeightBtn">
-                            <span>⚖️</span>
-                            Записать вес
-                        </button>
-                        <button class="action-btn" onclick="addWorkout()" id="addWorkoutBtn">
-                            <span>💪</span>
-                            Тренировка
-                        </button>
-                        <button class="action-btn" onclick="aiChat()" id="aiChatBtn">
-                            <span>🤖</span>
-                            AI Помощник
-                        </button>
+                
+                <div class="stat-card">
+                    <div class="stat-icon">🎯</div>
+                    <div class="stat-value" id="dailyGoal">2000</div>
+                    <div class="stat-label">Цель калорий</div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-icon">📅</div>
+                    <div class="stat-value" id="streakDays">7</div>
+                    <div class="stat-label">Дней подряд</div>
+                    <div class="progress-bar" id="streakProgress">
+                        <div class="progress-fill" style="width: 100%"></div>
                     </div>
                 </div>
             </div>
 
-            <!-- Nutrition Tab -->
-            <div class="tab-content" id="nutrition">
-                <div class="nutrition-header">
-                    <h2>Питание сегодня</h2>
+            <!-- 🎯 Быстрые действия -->
+            <div class="quick-actions">
+                <h3>🚀 Быстрые действия</h3>
+                <div class="action-buttons">
+                    <button class="action-btn">
+                        <span>📷</span>
+                        Сканировать еду
+                    </button>
+                    <button class="action-btn">
+                        <span>💧</span>
+                        Добавить воду
+                    </button>
+                    <button class="action-btn">
+                        <span>🏃‍♂️</span>
+                        Записать тренировку
+                    </button>
+                    <button class="action-btn">
+                        <span>📊</span>
+                        Посмотреть отчёт
+                    </button>
+                </div>
+            </div>
+        </div>
+
+                <!-- Tab 3: Nutrition -->
+                <div class="tab-content" id="nutrition">
+                    <div class="nutrition-header">
+                        <h2>🍎 Питание</h2>
+                        <div class="nutrition-date">
+                            <button class="date-nav" id="prevDay">‹</button>
+                            <span class="current-date" id="currentDate">Сегодня</span>
+                            <button class="date-nav" id="nextDay">›</button>
+                        </div>
+                    </div>
+                    
                     <div class="calories-summary">
-                        <div class="calories-consumed">
-                            <span class="value" id="consumedCalories">0</span>
-                            <span class="label">Потреблено</span>
+                        <div class="calories-card main-card">
+                            <div class="calories-info">
+                                <div class="calories-consumed">
+                                    <span class="calories-number" id="consumedCalories">1251</span>
+                                    <span class="calories-label">потреблено</span>
+                                </div>
+                                <div class="calories-separator">-</div>
+                                <div class="calories-remaining">
+                                    <span class="calories-number" id="remainingCalories">749</span>
+                                    <span class="calories-label">осталось</span>
+                                </div>
+                            </div>
+                            <div class="calories-progress-ring">
+                                <svg class="progress-ring" width="80" height="80">
+                                    <circle class="progress-ring-background" cx="40" cy="40" r="35"/>
+                                    <circle class="progress-ring-progress" cx="40" cy="40" r="35" id="caloriesProgressRing"/>
+                                </svg>
+                                <div class="progress-percentage" id="caloriesPercentage">63%</div>
+                            </div>
                         </div>
-                        <div class="calories-remaining">
-                            <span class="value" id="remainingCalories">2000</span>
-                            <span class="label">Осталось</span>
+
+                        <div class="macro-cards">
+                            <div class="macro-card protein">
+                                <div class="macro-icon">🥩</div>
+                                <div class="macro-info">
+                                    <div class="macro-value" id="proteinValue">78г</div>
+                                    <div class="macro-label">Белки</div>
+                                    <div class="macro-progress">
+                                        <div class="macro-bar">
+                                            <div class="macro-fill" id="proteinFill" style="width: 65%;"></div>
+                                        </div>
+                                        <span class="macro-target">120г</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="macro-card carbs">
+                                <div class="macro-icon">🍞</div>
+                                <div class="macro-info">
+                                    <div class="macro-value" id="carbsValue">156г</div>
+                                    <div class="macro-label">Углеводы</div>
+                                    <div class="macro-progress">
+                                        <div class="macro-bar">
+                                            <div class="macro-fill" id="carbsFill" style="width: 78%;"></div>
+                                        </div>
+                                        <span class="macro-target">200г</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="macro-card fats">
+                                <div class="macro-icon">🥑</div>
+                                <div class="macro-info">
+                                    <div class="macro-value" id="fatsValue">45г</div>
+                                    <div class="macro-label">Жиры</div>
+                                    <div class="macro-progress">
+                                        <div class="macro-bar">
+                                            <div class="macro-fill" id="fatsFill" style="width: 64%;"></div>
+                                        </div>
+                                        <span class="macro-target">70г</span>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                    </div>
-                </div>
-
-                <div class="meals-list" id="mealsList">
-                    <div class="empty-state">
-                        <span class="empty-icon">🍽️</span>
-                        <p>Пока нет записей о питании</p>
-                        <button class="btn-primary" onclick="addFood()">Добавить первый прием пищи</button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Progress Tab -->
-            <div class="tab-content" id="progress">
-                <div class="progress-header">
-                    <h2>Ваш прогресс</h2>
-                    <div class="progress-period">
-                        <button class="period-btn active" data-period="week">Неделя</button>
-                        <button class="period-btn" data-period="month">Месяц</button>
-                        <button class="period-btn" data-period="year">Год</button>
-                    </div>
-                </div>
-
-                <div class="progress-charts">
-                    <div class="chart-card">
-                        <h3>Изменение веса</h3>
-                        <canvas id="weightChart" width="350" height="200"></canvas>
                     </div>
                     
-                    <div class="chart-card">
-                        <h3>Калории по дням</h3>
-                        <canvas id="caloriesChart" width="350" height="200"></canvas>
-                    </div>
-                </div>
+                    <div class="meals-section">
+                        <div class="meals-header">
+                            <h3>📋 Приемы пищи</h3>
+                            <button class="btn-add-meal" id="addMealBtn">+ Добавить прием</button>
+                        </div>
 
-                <div class="achievements">
-                    <h3>Достижения</h3>
-                    <div class="achievement-list">
-                        <div class="achievement-item locked">
-                            <span class="achievement-icon">🏆</span>
-                            <div class="achievement-info">
-                                <div class="achievement-title">Первая неделя</div>
-                                <div class="achievement-desc">Ведите дневник 7 дней подряд</div>
+                        <div class="meals-list" id="mealsList">
+                            <!-- Завтрак -->
+                            <div class="meal-card" data-meal="breakfast">
+                                <div class="meal-header">
+                                    <div class="meal-info">
+                                        <div class="meal-icon">🌅</div>
+                                        <div class="meal-details">
+                                            <h4 class="meal-name">Завтрак</h4>
+                                            <div class="meal-stats">
+                                                <span class="meal-calories">420 ккал</span>
+                                                <span class="meal-time">08:30</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="meal-actions">
+                                        <button class="meal-action-btn" data-action="add">+</button>
+                                        <button class="meal-action-btn toggle-btn" data-action="toggle">↓</button>
+                                    </div>
+                                </div>
+                                
+                                <div class="meal-items">
+                                    <div class="food-item">
+                                        <div class="food-info">
+                                            <span class="food-name">Овсянка с ягодами</span>
+                                            <span class="food-details">150г</span>
+                                        </div>
+                                        <div class="food-actions">
+                                            <span class="food-calories">180 ккал</span>
+                                            <button class="food-remove">×</button>
+                                        </div>
+                                    </div>
+                                    <div class="food-item">
+                                        <div class="food-info">
+                                            <span class="food-name">Кофе с молоком</span>
+                                            <span class="food-details">200мл</span>
+                                        </div>
+                                        <div class="food-actions">
+                                            <span class="food-calories">45 ккал</span>
+                                            <button class="food-remove">×</button>
+                                        </div>
+                                    </div>
+                                    <div class="food-item">
+                                        <div class="food-info">
+                                            <span class="food-name">Банан</span>
+                                            <span class="food-details">120г</span>
+                                        </div>
+                                        <div class="food-actions">
+                                            <span class="food-calories">95 ккал</span>
+                                            <button class="food-remove">×</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Обед -->
+                            <div class="meal-card" data-meal="lunch">
+                                <div class="meal-header">
+                                    <div class="meal-info">
+                                        <div class="meal-icon">☀️</div>
+                                        <div class="meal-details">
+                                            <h4 class="meal-name">Обед</h4>
+                                            <div class="meal-stats">
+                                                <span class="meal-calories">550 ккал</span>
+                                                <span class="meal-time">13:15</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="meal-actions">
+                                        <button class="meal-action-btn" data-action="add">+</button>
+                                        <button class="meal-action-btn toggle-btn" data-action="toggle">↓</button>
+                                    </div>
+                                </div>
+                                
+                                <div class="meal-items collapsed">
+                                    <div class="food-item">
+                                        <div class="food-info">
+                                            <span class="food-name">Куриная грудка</span>
+                                            <span class="food-details">150г</span>
+                                        </div>
+                                        <div class="food-actions">
+                                            <span class="food-calories">250 ккал</span>
+                                            <button class="food-remove">×</button>
+                                        </div>
+                                    </div>
+                                    <div class="food-item">
+                                        <div class="food-info">
+                                            <span class="food-name">Рис отварной</span>
+                                            <span class="food-details">100г</span>
+                                        </div>
+                                        <div class="food-actions">
+                                            <span class="food-calories">130 ккал</span>
+                                            <button class="food-remove">×</button>
+                                        </div>
+                                    </div>
+                                    <div class="food-item">
+                                        <div class="food-info">
+                                            <span class="food-name">Салат овощной</span>
+                                            <span class="food-details">120г</span>
+                                        </div>
+                                        <div class="food-actions">
+                                            <span class="food-calories">85 ккал</span>
+                                            <button class="food-remove">×</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Ужин -->
+                            <div class="meal-card" data-meal="dinner">
+                                <div class="meal-header">
+                                    <div class="meal-info">
+                                        <div class="meal-icon">🌙</div>
+                                        <div class="meal-details">
+                                            <h4 class="meal-name">Ужин</h4>
+                                            <div class="meal-stats">
+                                                <span class="meal-calories">281 ккал</span>
+                                                <span class="meal-time">19:45</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="meal-actions">
+                                        <button class="meal-action-btn" data-action="add">+</button>
+                                        <button class="meal-action-btn toggle-btn" data-action="toggle">↓</button>
+                                    </div>
+                                </div>
+                                
+                                <div class="meal-items collapsed">
+                                    <div class="food-item">
+                                        <div class="food-info">
+                                            <span class="food-name">Творог нежирный</span>
+                                            <span class="food-details">200г</span>
+                                        </div>
+                                        <div class="food-actions">
+                                            <span class="food-calories">196 ккал</span>
+                                            <button class="food-remove">×</button>
+                                        </div>
+                                    </div>
+                                    <div class="food-item">
+                                        <div class="food-info">
+                                            <span class="food-name">Ягоды</span>
+                                            <span class="food-details">100г</span>
+                                        </div>
+                                        <div class="food-actions">
+                                            <span class="food-calories">85 ккал</span>
+                                            <button class="food-remove">×</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="empty-meal-state" id="emptyMealState" style="display: none;">
+                            <div class="empty-state-icon">🍽️</div>
+                            <h3>Добавьте свой первый прием пищи</h3>
+                            <p>Начните отслеживать питание для достижения ваших целей</p>
+                            <button class="btn-primary" id="addFirstMeal">Добавить еду</button>
+                        </div>
+                    </div>
+                    
+                    <div class="water-section">
+                        <div class="water-header">
+                            <h3>💧 Потребление воды</h3>
+                            <span class="water-target">Цель: 2000 мл</span>
+                        </div>
+                        
+                        <div class="water-tracker-mini">
+                            <div class="water-glasses">
+                                <div class="glass filled" data-amount="250"></div>
+                                <div class="glass filled" data-amount="250"></div>
+                                <div class="glass filled" data-amount="250"></div>
+                                <div class="glass filled" data-amount="250"></div>
+                                <div class="glass filled" data-amount="250"></div>
+                                <div class="glass" data-amount="250"></div>
+                                <div class="glass" data-amount="250"></div>
+                                <div class="glass" data-amount="250"></div>
+                            </div>
+                            <div class="water-stats">
+                                <span class="water-consumed">1250 мл</span>
+                                <span class="water-remaining">750 мл осталось</span>
                             </div>
                         </div>
                     </div>
                 </div>
-            </div>
 
-            <!-- Profile Tab -->
-            <div class="tab-content" id="profile">
-                <div class="profile-header">
-                    <div class="profile-avatar">
-                        <span class="avatar-text" id="avatarText">НД</span>
-                    </div>
-                    <div class="profile-info">
-                        <h2 id="profileName">Никита Дудко</h2>
-                        <p id="profileRole">Студент</p>
-                    </div>
+        <!-- 👤 Profile Tab -->
+        <div class="tab-content" id="profile">
+            <div class="profile-header">
+                <div class="profile-avatar">
+                    <span id="avatarText">НД</span>
                 </div>
-
-                <div class="profile-stats">
-                    <div class="profile-stat">
-                        <span class="stat-number" id="totalDays">1</span>
-                        <span class="stat-text">Дней в приложении</span>
-                    </div>
-                    <div class="profile-stat">
-                        <span class="stat-number" id="totalMeals">0</span>
-                        <span class="stat-text">Приемов пищи</span>
-                    </div>
-                    <div class="profile-stat">
-                        <span class="stat-number" id="totalWorkouts">0</span>
-                        <span class="stat-text">Тренировок</span>
-                    </div>
-                </div>
-
-                <div class="profile-actions">
-                    <button class="profile-btn" onclick="editProfile()">
-                        <span>✏️</span>
-                        Редактировать профиль
-                    </button>
-                    <button class="profile-btn" onclick="becomeCoach()">
-                        <span>🏆</span>
-                        Стать тренером
-                    </button>
-                    <button class="profile-btn" onclick="shareApp()">
-                        <span>📤</span>
-                        Поделиться приложением
-                    </button>
-                    <button class="profile-btn danger" onclick="logout()">
-                        <span>🚪</span>
-                        Выйти
-                    </button>
+                <div class="profile-info">
+                    <h2 id="profileName">Никита Дудко</h2>
+                    <p id="profileGoal">Цель: Снижение веса</p>
                 </div>
             </div>
-        </main>
+            
+            <div class="profile-stats">
+                <div class="profile-stat">
+                    <span class="stat-number" id="totalDays">7</span>
+                    <span class="stat-text">Дней с нами</span>
+                </div>
+                <div class="profile-stat">
+                    <span class="stat-number" id="avgCalories">1450</span>
+                    <span class="stat-text">Средние калории</span>
+                </div>
+                <div class="profile-stat">
+                    <span class="stat-number" id="streakRecord">7</span>
+                    <span class="stat-text">Рекорд streak</span>
+                    </div>
+                </div>
+
+            <div class="profile-actions">
+                <button class="profile-btn">
+                    <span>⚙️</span>
+                    Настройки профиля
+                </button>
+                <button class="profile-btn">
+                    <span>🎯</span>
+                    Изменить цель
+                        </button>
+                <button class="profile-btn">
+                    <span>📊</span>
+                    Экспорт данных
+                        </button>
+                <button class="profile-btn danger">
+                    <span>🗑️</span>
+                    Удалить аккаунт
+                        </button>
+            </div>
+        </div>
+    </main>
+
+    <!-- 🌊 FAB кнопка -->
+    <button class="fab" id="fabBtn">
+        <i class="fab-icon">+</i>
+                        </button>
+
+    <!-- FAB Menu -->
+    <div class="fab-menu" id="fabMenu">
+        <div class="fab-option" data-action="add-food">
+            <div class="fab-option-icon">🍎</div>
+            <span class="fab-option-text">Еда</span>
+        </div>
+        <div class="fab-option" data-action="add-water">
+            <div class="fab-option-icon">💧</div>
+            <span class="fab-option-text">Вода</span>
+        </div>
+        <div class="fab-option" data-action="add-workout">
+            <div class="fab-option-icon">🏃‍♂️</div>
+            <span class="fab-option-text">Тренировка</span>
+        </div>
+        <div class="fab-option" data-action="show-report">
+            <div class="fab-option-icon">📊</div>
+            <span class="fab-option-text">Отчет</span>
+        </div>
     </div>
 
-    <!-- Loading Overlay -->
-    <div class="loading-overlay" id="loadingOverlay">
-        <div class="spinner"></div>
-        <p>Загрузка...</p>
+    <!-- Modal: Add Food -->
+    <div class="modal" id="addFoodModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>🍎 Добавить еду</h3>
+                <button class="modal-close" data-modal="addFoodModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="food-search">
+                    <input type="text" id="foodSearch" placeholder="Поиск продукта..." class="search-input">
+                    <div class="search-results" id="searchResults"></div>
+                </div>
+                
+                <div class="food-details" id="foodDetails" style="display: none;">
+                    <div class="food-info">
+                        <h4 id="selectedFoodName">Выбранный продукт</h4>
+                        <div class="nutrition-info">
+                            <div class="nutrition-item">
+                                <span>Калории:</span>
+                                <span id="selectedFoodCalories">0</span> ккал/100г
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="quantity-input">
+                        <label for="foodQuantity">Количество (г):</label>
+                        <input type="number" id="foodQuantity" value="100" min="1" max="2000" class="quantity-field">
+                    </div>
+                    
+                    <div class="total-calories">
+                        Итого: <span id="totalCalories">0</span> ккал
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" data-modal="addFoodModal">Отмена</button>
+                <button class="btn-primary" id="saveFoodBtn" disabled>Добавить</button>
+                    </div>
+                </div>
+            </div>
+
+    <!-- Modal: Add Water -->
+    <div class="modal" id="addWaterModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>💧 Добавить воду</h3>
+                <button class="modal-close" data-modal="addWaterModal">&times;</button>
+                        </div>
+            <div class="modal-body">
+                <div class="water-tracker">
+                    <div class="water-progress">
+                        <div class="water-wave"></div>
+                        <div class="water-amount">
+                            <span id="currentWater">0</span>
+                            <small>из 2000 мл</small>
+                        </div>
+                    </div>
+                    
+                    <div class="water-quick-actions">
+                        <button class="water-btn" data-amount="250">250 мл</button>
+                        <button class="water-btn" data-amount="500">500 мл</button>
+                        <button class="water-btn" data-amount="1000">1 л</button>
+                </div>
+
+                    <div class="custom-water">
+                        <input type="number" id="customWaterAmount" placeholder="Свое количество" min="50" max="2000" step="50">
+                        <button class="btn-primary" id="addCustomWater">Добавить</button>
+                    </div>
+                </div>
+                    </div>
+                </div>
+            </div>
+
+    <!-- Modal: Add Workout -->
+    <div class="modal" id="addWorkoutModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>🏃‍♂️ Добавить тренировку</h3>
+                <button class="modal-close" data-modal="addWorkoutModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="workout-types">
+                    <div class="workout-type" data-type="cardio">
+                        <div class="workout-icon">🏃‍♂️</div>
+                        <span>Кардио</span>
+                    </div>
+                    <div class="workout-type" data-type="strength">
+                        <div class="workout-icon">💪</div>
+                        <span>Силовая</span>
+                    </div>
+                    <div class="workout-type" data-type="yoga">
+                        <div class="workout-icon">🧘‍♀️</div>
+                        <span>Йога</span>
+                    </div>
+                    <div class="workout-type" data-type="other">
+                        <div class="workout-icon">⚡</div>
+                        <span>Другое</span>
+                    </div>
+                </div>
+
+                <div class="workout-details" id="workoutDetails" style="display: none;">
+                    <div class="input-group">
+                        <label for="workoutName">Название:</label>
+                        <input type="text" id="workoutName" placeholder="Например: Утренняя пробежка">
+                    </div>
+                    
+                    <div class="input-group">
+                        <label for="workoutDuration">Длительность (мин):</label>
+                        <input type="number" id="workoutDuration" min="1" max="300" value="30">
+                    </div>
+                    
+                    <div class="input-group">
+                        <label for="caloriesBurned">Сожжено калорий:</label>
+                        <input type="number" id="caloriesBurned" min="1" max="2000" placeholder="Примерно">
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" data-modal="addWorkoutModal">Отмена</button>
+                <button class="btn-primary" id="saveWorkoutBtn" disabled>Сохранить</button>
+            </div>
+        </div>
     </div>
 
-    <!-- Scripts -->
-    <script src="js/app.js?v=2.0"></script>
-    <script>
-        // Простая отладка для проверки загрузки функций
-        window.addEventListener('load', function() {
-            console.log('🚀 Mini App загружен');
-            console.log('📋 Доступные функции:', {
-                addFood: typeof window.addFood,
-                addWeight: typeof window.addWeight,
-                aiChat: typeof window.aiChat,
-                app: typeof window.app
-            });
-        });
+    <!-- Modal: Report -->
+    <div class="modal" id="reportModal">
+        <div class="modal-content modal-large">
+            <div class="modal-header">
+                <h3>📊 Детальный отчет</h3>
+                <button class="modal-close" data-modal="reportModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="report-tabs">
+                    <button class="report-tab active" data-tab="today">Сегодня</button>
+                    <button class="report-tab" data-tab="week">Неделя</button>
+                    <button class="report-tab" data-tab="month">Месяц</button>
+                </div>
+                
+                <div class="report-content">
+                    <div class="report-section" id="reportToday">
+                        <div class="report-stats">
+                            <div class="report-stat">
+                                <div class="stat-icon">🔥</div>
+                                <div class="stat-info">
+                                    <div class="stat-value">1251</div>
+                                    <div class="stat-label">Калории съедено</div>
+                                </div>
+                            </div>
+                            <div class="report-stat">
+                                <div class="stat-icon">⚡</div>
+                                <div class="stat-info">
+                                    <div class="stat-value">320</div>
+                                    <div class="stat-label">Калории сожжено</div>
+                                </div>
+                            </div>
+                            <div class="report-stat">
+                                <div class="stat-icon">💧</div>
+                                <div class="stat-info">
+                                    <div class="stat-value">1.5</div>
+                                    <div class="stat-label">Литров воды</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="report-chart">
+                            <canvas id="todayChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
-        // Fallback функции на случай проблем с основным JavaScript
-        window.fallbackAddFood = function() {
-            alert('📸 Анализ питания\n\nДля анализа фото еды:\n1. Откройте @mvpfitness_bot\n2. Отправьте фото блюда\n3. Получите анализ калорий');
-            try {
-                window.open('https://t.me/mvpfitness_bot', '_blank');
-            } catch(e) {
-                console.log('Не удалось открыть Telegram');
-            }
-        };
+    <!-- Modal: Achievement Details -->
+    <div class="modal" id="achievementModal">
+        <div class="modal-content achievement-modal">
+            <div class="modal-header">
+                <h3 id="achievementTitle">🏆 Достижение</h3>
+                <button class="modal-close" data-modal="achievementModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="achievement-detail">
+                    <div class="achievement-icon-large" id="achievementIconLarge">🔥</div>
+                    <div class="achievement-status" id="achievementStatus">Получено</div>
+                    
+                    <div class="achievement-description" id="achievementDescription">
+                        Отличная работа! Вы успешно соблюдали дневную норму калорий в течение целой недели.
+                    </div>
+                    
+                    <div class="achievement-progress-detail" id="achievementProgressDetail">
+                        <div class="progress-label">Прогресс выполнения</div>
+                        <div class="progress-bar-large">
+                            <div class="progress-fill-large" id="achievementProgressFill"></div>
+                        </div>
+                        <div class="progress-text" id="achievementProgressText">7/7 дней</div>
+                    </div>
+                    
+                    <div class="achievement-rewards" id="achievementRewards">
+                        <h4>🎁 Награды</h4>
+                        <div class="rewards-list">
+                            <div class="reward-item">
+                                <span class="reward-icon">⭐</span>
+                                <span class="reward-text">+50 опыта</span>
+                            </div>
+                            <div class="reward-item">
+                                <span class="reward-icon">🏅</span>
+                                <span class="reward-text">Значок "Дисциплина"</span>
+                    </div>
+                </div>
+                    </div>
+                    
+                    <div class="achievement-tips" id="achievementTips">
+                        <h4>💡 Советы</h4>
+                        <ul class="tips-list">
+                            <li>Планируйте питание заранее</li>
+                            <li>Используйте напоминания в приложении</li>
+                            <li>Не забывайте о перекусах</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="achievement-share" id="achievementShare">
+                        <button class="btn-share" id="shareAchievementBtn">
+                            📤 Поделиться достижением
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
-        window.fallbackAiChat = function() {
-            alert('🤖 AI Помощник\n\nДля чата с AI:\n1. Откройте @mvpfitness_bot\n2. Напишите любой вопрос\n3. Получите экспертный совет');
-            try {
-                window.open('https://t.me/mvpfitness_bot', '_blank');
-            } catch(e) {
-                console.log('Не удалось открыть Telegram');
-            }
-        };
+    <!-- Achievement Unlock Notification -->
+    <div class="achievement-unlock-notification" id="achievementUnlockNotification">
+        <div class="unlock-animation">
+            <div class="unlock-icon">🏆</div>
+            <div class="unlock-text">
+                <div class="unlock-title">Достижение разблокировано!</div>
+                <div class="unlock-name" id="unlockedAchievementName">Первая неделя</div>
+            </div>
+            <div class="unlock-sparkles">
+                <span class="sparkle">✨</span>
+                <span class="sparkle">⭐</span>
+                <span class="sparkle">✨</span>
+                <span class="sparkle">🌟</span>
+                <span class="sparkle">✨</span>
+            </div>
+        </div>
+    </div>
 
-        // Проверяем функции через 3 секунды и заменяем на fallback если нужно
-        setTimeout(function() {
-            if (typeof window.addFood !== 'function') {
-                console.log('⚠️ Основная функция addFood не загружена, использую fallback');
-                window.addFood = window.fallbackAddFood;
-            }
-            if (typeof window.aiChat !== 'function') {
-                console.log('⚠️ Основная функция aiChat не загружена, использую fallback');
-                window.aiChat = window.fallbackAiChat;
-            }
-        }, 3000);
-
-        // Простые тестовые функции для проверки
-        window.testAddFood = function() {
-            console.log('🧪 Test addFood clicked');
-            
-            // Проверяем AI API
-            fetch('/api/ai/status')
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        alert('✅ AI API работает!\n\nДля анализа фото:\n1. Откройте @mvpfitness_bot\n2. Отправьте фото блюда\n3. Получите анализ калорий');
-                        try {
-                            window.open('https://t.me/mvpfitness_bot', '_blank');
-                        } catch(e) {
-                            console.log('Не удалось открыть Telegram');
-                        }
-                    } else {
-                        alert('❌ AI API недоступен');
-                    }
-                })
-                .catch(error => {
-                    console.error('API Error:', error);
-                    alert('❌ Ошибка подключения к API');
-                });
-        };
-
-        window.testAiChat = function() {
-            console.log('🧪 Test aiChat clicked');
-            
-            const question = prompt('🤖 Задайте вопрос AI помощнику:');
-            if (!question) return;
-            
-            // Отправляем вопрос напрямую к API
-            fetch('/api/ai/chat', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    message: question,
-                    userId: 'test_user'
-                })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    alert('🤖 AI ОТВЕТ:\n\n' + data.response);
-                } else {
-                    alert('❌ Ошибка AI: ' + (data.message || 'Неизвестная ошибка'));
-                }
-            })
-            .catch(error => {
-                console.error('AI Chat Error:', error);
-                alert('❌ Не удалось связаться с AI');
-            });
-        };
-
-        // Переназначаем функции для тестирования
-        setTimeout(function() {
-            console.log('🔧 Переназначаю функции на тестовые версии');
-            window.addFood = window.testAddFood;
-            window.aiChat = window.testAiChat;
-        }, 1000);
-    </script>
-
-    <!-- Floating Action Button -->
-    <button class="fab" onclick="addFood()" title="Добавить еду">📸</button>
+    <script src="js/app.js?v=3.0"></script>
 </body>
 </html> 

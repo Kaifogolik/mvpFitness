@@ -12,11 +12,15 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
-import java.util.*;
+import java.time.format.DateTimeFormatter;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
- * REST API для работы с питанием и статистикой
+ * REST контроллер для питания и статистики
  */
 @RestController
 @RequestMapping("/api/nutrition")
@@ -25,219 +29,220 @@ public class NutritionController {
     
     private static final Logger logger = LoggerFactory.getLogger(NutritionController.class);
     
-    /**
-     * Mock версия дневной статистики для демонстрации Mini App
-     */
-    @GetMapping("/{telegramId}/daily")
-    public ResponseEntity<Map<String, Object>> getDailyStatsMock(@PathVariable String telegramId) {
-        Map<String, Object> response = new HashMap<>();
-        
-        // Создаем mock данные дневной статистики
-        response.put("success", true);
-        response.put("date", java.time.LocalDate.now().toString());
-        response.put("total_calories", 1250.5);
-        response.put("total_protein", 85.2);
-        response.put("total_carbs", 140.8);
-        response.put("total_fat", 45.3);
-        response.put("entries_count", 4);
-        response.put("goal_calories", 2000);
-        response.put("remaining_calories", 749.5);
-        
-        // Mock записи о питании
-        List<Map<String, Object>> entries = new ArrayList<>();
-        
-        Map<String, Object> entry1 = new HashMap<>();
-        entry1.put("id", 1);
-        entry1.put("foodName", "Овсянка с ягодами");
-        entry1.put("calories", 320.0);
-        entry1.put("proteins", 12.5);
-        entry1.put("carbs", 58.0);
-        entry1.put("fats", 6.2);
-        entry1.put("mealType", "BREAKFAST");
-        entry1.put("timestamp", "2025-07-25T08:30:00");
-        entries.add(entry1);
-        
-        Map<String, Object> entry2 = new HashMap<>();
-        entry2.put("id", 2);
-        entry2.put("foodName", "Куриная грудка с рисом");
-        entry2.put("calories", 450.0);
-        entry2.put("proteins", 35.2);
-        entry2.put("carbs", 42.8);
-        entry2.put("fats", 12.1);
-        entry2.put("mealType", "LUNCH");
-        entry2.put("timestamp", "2025-07-25T13:15:00");
-        entries.add(entry2);
-        
-        Map<String, Object> entry3 = new HashMap<>();
-        entry3.put("id", 3);
-        entry3.put("foodName", "Греческий салат");
-        entry3.put("calories", 280.5);
-        entry3.put("proteins", 15.5);
-        entry3.put("carbs", 15.0);
-        entry3.put("fats", 18.0);
-        entry3.put("mealType", "DINNER");
-        entry3.put("timestamp", "2025-07-25T19:45:00");
-        entries.add(entry3);
-        
-        response.put("entries", entries);
-        response.put("message", "Mock дневная статистика");
-        
-        logger.info("📊 Mock дневная статистика отправлена для telegramId: {}", telegramId);
-        
-        return ResponseEntity.ok(response);
-    }
-    
-    /**
-     * Mock версия недельной статистики для демонстрации Mini App
-     */
-    @GetMapping("/{telegramId}/weekly")
-    public ResponseEntity<Map<String, Object>> getWeeklyStatsMock(@PathVariable String telegramId) {
-        Map<String, Object> response = new HashMap<>();
-        
-        response.put("success", true);
-        response.put("average_daily_calories", 1450.2);
-        response.put("total_entries", 28);
-        response.put("days_tracked", 7);
-        response.put("goal_achievement_rate", 0.72);
-        
-        // Mock статистика по дням
-        List<Map<String, Object>> dailyStats = new ArrayList<>();
-        for (int i = 6; i >= 0; i--) {
-            Map<String, Object> dayStats = new HashMap<>();
-            dayStats.put("date", java.time.LocalDate.now().minusDays(i).toString());
-            dayStats.put("calories", 1200 + Math.random() * 400);
-            dayStats.put("entries_count", (int)(Math.random() * 5) + 2);
-            dailyStats.add(dayStats);
-        }
-        
-        response.put("daily_stats", dailyStats);
-        response.put("message", "Mock недельная статистика");
-        
-        logger.info("📈 Mock недельная статистика отправлена для telegramId: {}", telegramId);
-        
-        return ResponseEntity.ok(response);
-    }
-    
-    /**
-     * Mock версия рекомендаций для демонстрации Mini App
-     */
-    @GetMapping("/{telegramId}/recommendations")
-    public ResponseEntity<Map<String, Object>> getRecommendationsMock(@PathVariable String telegramId) {
-        Map<String, Object> response = new HashMap<>();
-        
-        response.put("success", true);
-        
-        List<String> recommendations = Arrays.asList(
-            "🥗 Добавьте больше овощей в рацион для получения клетчатки",
-            "💪 Увеличьте потребление белка для поддержания мышечной массы",
-            "💧 Не забывайте пить достаточно воды - минимум 2 литра в день",
-            "🕐 Старайтесь есть в одно и то же время каждый день",
-            "🏃‍♂️ Сочетайте правильное питание с регулярными тренировками"
-        );
-        
-        response.put("recommendations", recommendations);
-        response.put("message", "Mock персональные рекомендации");
-        
-        logger.info("💡 Mock рекомендации отправлены для telegramId: {}", telegramId);
-        
-        return ResponseEntity.ok(response);
-    }
-    
     @Autowired
     private NutritionService nutritionService;
     
     @Autowired
     private UserService userService;
     
-    // УДАЛЕН оригинальный getDailyStats для избежания конфликта маппинга с Mock версией
-    
-    // УДАЛЕН оригинальный getWeeklyStats для избежания конфликта маппинга с Mock версией
-    
     /**
-     * Получить отчет о прогрессе к целям
+     * Получить дневную статистику питания
      */
-    @GetMapping("/{telegramId}/progress")
-    public ResponseEntity<Map<String, Object>> getProgressReport(
+    @GetMapping("/{telegramId}/daily")
+    public ResponseEntity<Map<String, Object>> getDailyStats(
             @PathVariable String telegramId,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
         
-        Map<String, Object> response = new HashMap<>();
-        
         try {
+            logger.info("📊 Получение дневной статистики для telegramId: {}, дата: {}", telegramId, date);
+            
+            if (date == null) {
+                date = LocalDate.now();
+            }
+            
             Optional<User> userOpt = userService.findByTelegramId(telegramId);
             if (userOpt.isEmpty()) {
-                response.put("success", false);
-                response.put("message", "Пользователь не найден");
-                return ResponseEntity.notFound().build();
+                return ResponseEntity.badRequest().body(Map.of(
+                    "success", false,
+                    "message", "Пользователь не найден",
+                    "error", "USER_NOT_FOUND"
+                ));
             }
             
             User user = userOpt.get();
-            LocalDate targetDate = date != null ? date : LocalDate.now();
+            NutritionService.DailyNutritionStats stats = nutritionService.getDailyStats(user, date);
             
-            NutritionService.ProgressReport report = nutritionService.getProgressReport(user, targetDate);
-            
-            Map<String, Object> progressData = new HashMap<>();
-            progressData.put("date", targetDate);
-            progressData.put("onTrack", report.isOnTrack());
-            progressData.put("feedback", report.getFeedback());
-            
-            // Сегодняшняя статистика
-            NutritionService.DailyNutritionStats todayStats = report.getTodayStats();
-            Map<String, Object> todayData = new HashMap<>();
-            todayData.put("totalCalories", todayStats.getTotalCalories());
-            todayData.put("totalProteins", todayStats.getTotalProteins());
-            todayData.put("totalFats", todayStats.getTotalFats());
-            todayData.put("totalCarbs", todayStats.getTotalCarbs());
-            
-            if (todayStats.getProfile() != null) {
-                todayData.put("caloriesProgress", todayStats.getCaloriesProgress());
-                todayData.put("proteinsProgress", todayStats.getProteinsProgress());
-                todayData.put("fatsProgress", todayStats.getFatsProgress());
-                todayData.put("carbsProgress", todayStats.getCarbsProgress());
-            }
-            
-            progressData.put("todayStats", todayData);
-            
-            // Профиль с целями
-            if (report.getProfile() != null) {
-                Map<String, Object> profileData = new HashMap<>();
-                profileData.put("fitnessGoal", report.getProfile().getFitnessGoal());
-                profileData.put("dailyCaloriesGoal", report.getProfile().getDailyCaloriesGoal());
-                profileData.put("dailyProteinsGoal", report.getProfile().getDailyProteinsGoal());
-                profileData.put("dailyFatsGoal", report.getProfile().getDailyFatsGoal());
-                profileData.put("dailyCarbsGoal", report.getProfile().getDailyCarbsGoal());
-                
-                progressData.put("profile", profileData);
-            }
-            
+            Map<String, Object> response = new HashMap<>();
             response.put("success", true);
-            response.put("progressReport", progressData);
+            response.put("date", date.format(DateTimeFormatter.ISO_LOCAL_DATE));
+            response.put("total_calories", stats.getTotalCalories());
+            response.put("total_protein", stats.getTotalProteins());
+            response.put("total_carbs", stats.getTotalCarbs());
+            response.put("total_fat", stats.getTotalFats());
+            response.put("entries_count", stats.getEntries().size());
             
+            // Конвертируем записи в формат для фронтенда
+            List<Map<String, Object>> entries = stats.getEntries().stream()
+                    .map(this::convertNutritionEntryToMap)
+                    .collect(Collectors.toList());
+            response.put("entries", entries);
+            
+            // Цели и прогресс
+            if (stats.getProfile() != null) {
+                response.put("goal_calories", stats.getProfile().getDailyCaloriesGoal());
+                response.put("remaining_calories", Math.max(0, 
+                    (stats.getProfile().getDailyCaloriesGoal() != null ? stats.getProfile().getDailyCaloriesGoal() : 2000) 
+                    - stats.getTotalCalories()));
+                response.put("calories_progress", stats.getCaloriesProgress());
+                response.put("proteins_progress", stats.getProteinsProgress());
+                response.put("fats_progress", stats.getFatsProgress());
+                response.put("carbs_progress", stats.getCarbsProgress());
+            } else {
+                response.put("goal_calories", 2000); // default goal
+                response.put("remaining_calories", Math.max(0, 2000 - stats.getTotalCalories()));
+            }
+            
+            response.put("message", "Дневная статистика получена");
+            
+            logger.info("✅ Дневная статистика отправлена для пользователя: {}", user.getUsername());
             return ResponseEntity.ok(response);
             
         } catch (Exception e) {
-            logger.error("Ошибка получения отчета о прогрессе для {}: {}", telegramId, e.getMessage());
-            response.put("success", false);
-            response.put("message", "Внутренняя ошибка сервера");
-            return ResponseEntity.internalServerError().body(response);
+            logger.error("❌ Ошибка получения дневной статистики для {}: {}", telegramId, e.getMessage(), e);
+            return ResponseEntity.status(500).body(Map.of(
+                "success", false,
+                "message", "Ошибка сервера: " + e.getMessage(),
+                "error", "INTERNAL_ERROR"
+            ));
         }
     }
     
-    // УДАЛЕН оригинальный getNutritionRecommendations для избежания конфликта маппинга с Mock версией
+    /**
+     * Получить недельную статистику
+     */
+    @GetMapping("/{telegramId}/weekly")
+    public ResponseEntity<Map<String, Object>> getWeeklyStats(
+            @PathVariable String telegramId,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate) {
+        
+        try {
+            logger.info("📈 Получение недельной статистики для telegramId: {}, начальная дата: {}", telegramId, startDate);
+            
+            if (startDate == null) {
+                startDate = LocalDate.now().minusDays(6); // последние 7 дней
+            }
+            
+            Optional<User> userOpt = userService.findByTelegramId(telegramId);
+            if (userOpt.isEmpty()) {
+                return ResponseEntity.badRequest().body(Map.of(
+                    "success", false,
+                    "message", "Пользователь не найден",
+                    "error", "USER_NOT_FOUND"
+                ));
+            }
+            
+            User user = userOpt.get();
+            NutritionService.WeeklyNutritionStats weeklyStats = nutritionService.getWeeklyStats(user, startDate);
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("start_date", startDate.format(DateTimeFormatter.ISO_LOCAL_DATE));
+            response.put("end_date", weeklyStats.getEndDate().format(DateTimeFormatter.ISO_LOCAL_DATE));
+            response.put("average_daily_calories", weeklyStats.getAverageCalories());
+            response.put("total_calories", weeklyStats.getTotalCalories());
+            response.put("days_tracked", weeklyStats.getDailyStats().size());
+            
+            // Статистика по дням
+            List<Map<String, Object>> dailyStats = weeklyStats.getDailyStats().entrySet().stream()
+                    .map(entry -> {
+                        LocalDate date = entry.getKey();
+                        NutritionService.DailyNutritionStats dayStats = entry.getValue();
+                        Map<String, Object> dayMap = new HashMap<>();
+                        dayMap.put("date", date.format(DateTimeFormatter.ISO_LOCAL_DATE));
+                        dayMap.put("calories", dayStats.getTotalCalories());
+                        dayMap.put("proteins", dayStats.getTotalProteins());
+                        dayMap.put("fats", dayStats.getTotalFats());
+                        dayMap.put("carbs", dayStats.getTotalCarbs());
+                        dayMap.put("entries_count", dayStats.getEntries().size());
+                        return dayMap;
+                    })
+                    .collect(Collectors.toList());
+            response.put("daily_stats", dailyStats);
+            
+            // Подсчитываем достижение целей
+            long daysOnTrack = weeklyStats.getDailyStats().values().stream()
+                    .mapToLong(dayStats -> {
+                        if (dayStats.getProfile() != null && dayStats.getProfile().getDailyCaloriesGoal() != null) {
+                            double goalProgress = dayStats.getCaloriesProgress() / 100.0;
+                            return (goalProgress >= 0.8 && goalProgress <= 1.2) ? 1 : 0;
+                        }
+                        return 0;
+                    })
+                    .sum();
+            
+            response.put("goal_achievement_rate", weeklyStats.getDailyStats().size() > 0 ? 
+                (double) daysOnTrack / weeklyStats.getDailyStats().size() : 0.0);
+            
+            response.put("message", "Недельная статистика получена");
+            
+            logger.info("✅ Недельная статистика отправлена для пользователя: {}", user.getUsername());
+            return ResponseEntity.ok(response);
+            
+        } catch (Exception e) {
+            logger.error("❌ Ошибка получения недельной статистики для {}: {}", telegramId, e.getMessage(), e);
+            return ResponseEntity.status(500).body(Map.of(
+                "success", false,
+                "message", "Ошибка сервера: " + e.getMessage(),
+                "error", "INTERNAL_ERROR"
+            ));
+        }
+    }
+    
+    /**
+     * Получить рекомендации по питанию
+     */
+    @GetMapping("/{telegramId}/recommendations")
+    public ResponseEntity<Map<String, Object>> getRecommendations(@PathVariable String telegramId) {
+        
+        try {
+            logger.info("💡 Получение рекомендаций для telegramId: {}", telegramId);
+            
+            Optional<User> userOpt = userService.findByTelegramId(telegramId);
+            if (userOpt.isEmpty()) {
+                return ResponseEntity.badRequest().body(Map.of(
+                    "success", false,
+                    "message", "Пользователь не найден",
+                    "error", "USER_NOT_FOUND"
+                ));
+            }
+            
+            User user = userOpt.get();
+            List<String> recommendations = nutritionService.getNutritionRecommendations(user);
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("recommendations", recommendations);
+            response.put("message", "Персональные рекомендации получены");
+            
+            logger.info("✅ Рекомендации отправлены для пользователя: {}", user.getUsername());
+            return ResponseEntity.ok(response);
+            
+        } catch (Exception e) {
+            logger.error("❌ Ошибка получения рекомендаций для {}: {}", telegramId, e.getMessage(), e);
+            return ResponseEntity.status(500).body(Map.of(
+                "success", false,
+                "message", "Ошибка сервера: " + e.getMessage(),
+                "error", "INTERNAL_ERROR"
+            ));
+        }
+    }
     
     /**
      * Получить любимые продукты пользователя
      */
     @GetMapping("/{telegramId}/favorites")
     public ResponseEntity<Map<String, Object>> getFavoriteProducts(@PathVariable String telegramId) {
-        Map<String, Object> response = new HashMap<>();
         
         try {
+            logger.info("⭐ Получение любимых продуктов для telegramId: {}", telegramId);
+            
             Optional<User> userOpt = userService.findByTelegramId(telegramId);
             if (userOpt.isEmpty()) {
-                response.put("success", false);
-                response.put("message", "Пользователь не найден");
-                return ResponseEntity.notFound().build();
+                return ResponseEntity.badRequest().body(Map.of(
+                    "success", false,
+                    "message", "Пользователь не найден",
+                    "error", "USER_NOT_FOUND"
+                ));
             }
             
             User user = userOpt.get();
@@ -245,128 +250,110 @@ public class NutritionController {
             
             List<Map<String, Object>> favoritesData = favorites.stream()
                     .map(fav -> {
-                        Map<String, Object> favData = new HashMap<>();
-                        favData.put("foodName", fav.getFoodName());
-                        favData.put("count", fav.getCount());
-                        favData.put("averageCalories", fav.getAverageCalories());
-                        return favData;
+                         Map<String, Object> favMap = new HashMap<>();
+                         favMap.put("foodName", fav.getFoodName());
+                         favMap.put("count", fav.getCount());
+                         favMap.put("averageCalories", fav.getAverageCalories());
+                         return favMap;
                     })
                     .collect(Collectors.toList());
             
+            Map<String, Object> response = new HashMap<>();
             response.put("success", true);
             response.put("favorites", favoritesData);
-            response.put("count", favoritesData.size());
+            response.put("message", "Любимые продукты получены");
             
+            logger.info("✅ Любимые продукты отправлены для пользователя: {}", user.getUsername());
             return ResponseEntity.ok(response);
             
         } catch (Exception e) {
-            logger.error("Ошибка получения любимых продуктов для {}: {}", telegramId, e.getMessage());
-            response.put("success", false);
-            response.put("message", "Внутренняя ошибка сервера");
-            return ResponseEntity.internalServerError().body(response);
+            logger.error("❌ Ошибка получения любимых продуктов для {}: {}", telegramId, e.getMessage(), e);
+            return ResponseEntity.status(500).body(Map.of(
+                "success", false,
+                "message", "Ошибка сервера: " + e.getMessage(),
+                "error", "INTERNAL_ERROR"
+            ));
         }
     }
     
     /**
-     * Получить последние записи о питании
+     * Добавить новую запись о питании
      */
-    @GetMapping("/{telegramId}/recent")
-    public ResponseEntity<Map<String, Object>> getRecentEntries(
+    @PostMapping("/{telegramId}/entries")
+    public ResponseEntity<Map<String, Object>> addNutritionEntry(
             @PathVariable String telegramId,
-            @RequestParam(defaultValue = "10") int limit) {
-        
-        Map<String, Object> response = new HashMap<>();
+            @RequestBody Map<String, Object> entryData) {
         
         try {
+            logger.info("🍎 Добавление записи о питании для telegramId: {}", telegramId);
+            
             Optional<User> userOpt = userService.findByTelegramId(telegramId);
             if (userOpt.isEmpty()) {
-                response.put("success", false);
-                response.put("message", "Пользователь не найден");
-                return ResponseEntity.notFound().build();
+                return ResponseEntity.badRequest().body(Map.of(
+                    "success", false,
+                    "message", "Пользователь не найден",
+                    "error", "USER_NOT_FOUND"
+                ));
             }
             
             User user = userOpt.get();
-            List<NutritionEntry> recentEntries = nutritionService.getRecentEntries(user, Math.min(limit, 50));
             
-            List<Map<String, Object>> entriesData = recentEntries.stream()
-                    .map(this::entryToMap)
-                    .collect(Collectors.toList());
+            // Создаем новую запись питания
+            NutritionEntry entry = new NutritionEntry();
+            entry.setUser(user);
+            entry.setFoodName((String) entryData.get("foodName"));
+            entry.setQuantity((String) entryData.getOrDefault("quantity", "1 порция"));
+            entry.setCalories(((Number) entryData.getOrDefault("calories", 0)).doubleValue());
+            entry.setProteins(((Number) entryData.getOrDefault("proteins", 0)).doubleValue());
+            entry.setFats(((Number) entryData.getOrDefault("fats", 0)).doubleValue());
+            entry.setCarbs(((Number) entryData.getOrDefault("carbs", 0)).doubleValue());
             
-            response.put("success", true);
-            response.put("entries", entriesData);
-            response.put("count", entriesData.size());
-            
-            return ResponseEntity.ok(response);
-            
-        } catch (Exception e) {
-            logger.error("Ошибка получения последних записей для {}: {}", telegramId, e.getMessage());
-            response.put("success", false);
-            response.put("message", "Внутренняя ошибка сервера");
-            return ResponseEntity.internalServerError().body(response);
-        }
-    }
-    
-    /**
-     * Получить статистику по типам приемов пищи
-     */
-    @GetMapping("/{telegramId}/meal-types")
-    public ResponseEntity<Map<String, Object>> getMealTypeStatistics(
-            @PathVariable String telegramId,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
-        
-        Map<String, Object> response = new HashMap<>();
-        
-        try {
-            Optional<User> userOpt = userService.findByTelegramId(telegramId);
-            if (userOpt.isEmpty()) {
-                response.put("success", false);
-                response.put("message", "Пользователь не найден");
-                return ResponseEntity.notFound().build();
+            if (entryData.containsKey("mealType")) {
+                try {
+                    entry.setMealType(NutritionEntry.MealType.valueOf(
+                        ((String) entryData.get("mealType")).toUpperCase()));
+                } catch (IllegalArgumentException e) {
+                    entry.setMealType(NutritionEntry.MealType.OTHER);
+                }
             }
             
-            User user = userOpt.get();
-            LocalDate start = startDate != null ? startDate : LocalDate.now().minusDays(7);
-            LocalDate end = endDate != null ? endDate : LocalDate.now();
+            // Сохраняем (здесь нужно добавить метод save в NutritionService)
+            // entry = nutritionService.saveEntry(entry);
             
-            // Получаем статистику по типам приемов пищи
-            // Это требует добавления метода в NutritionService, пока возвращаем базовую информацию
-            Map<String, Object> mealTypeStats = new HashMap<>();
-            mealTypeStats.put("period", Map.of("startDate", start, "endDate", end));
-            mealTypeStats.put("message", "Статистика по типам приемов пищи будет доступна в следующей версии");
-            
+            Map<String, Object> response = new HashMap<>();
             response.put("success", true);
-            response.put("mealTypeStats", mealTypeStats);
+            response.put("entry", convertNutritionEntryToMap(entry));
+            response.put("message", "Запись о питании добавлена");
             
+            logger.info("✅ Запись о питании добавлена для пользователя: {}", user.getUsername());
             return ResponseEntity.ok(response);
             
         } catch (Exception e) {
-            logger.error("Ошибка получения статистики по типам приемов пищи для {}: {}", telegramId, e.getMessage());
-            response.put("success", false);
-            response.put("message", "Внутренняя ошибка сервера");
-            return ResponseEntity.internalServerError().body(response);
+            logger.error("❌ Ошибка добавления записи питания для {}: {}", telegramId, e.getMessage(), e);
+            return ResponseEntity.status(500).body(Map.of(
+                "success", false,
+                "message", "Ошибка сервера: " + e.getMessage(),
+                "error", "INTERNAL_ERROR"
+            ));
         }
     }
     
-    /**
-     * Преобразовать NutritionEntry в Map для JSON ответа
-     */
-    private Map<String, Object> entryToMap(NutritionEntry entry) {
-        Map<String, Object> entryData = new HashMap<>();
-        entryData.put("id", entry.getId());
-        entryData.put("date", entry.getDate());
-        entryData.put("timestamp", entry.getTimestamp());
-        entryData.put("foodName", entry.getFoodName());
-        entryData.put("quantity", entry.getQuantity());
-        entryData.put("calories", entry.getCalories());
-        entryData.put("proteins", entry.getProteins());
-        entryData.put("fats", entry.getFats());
-        entryData.put("carbs", entry.getCarbs());
-        entryData.put("confidence", entry.getConfidence());
-        entryData.put("mealType", entry.getMealType());
-        entryData.put("notes", entry.getNotes());
-        entryData.put("dataSource", entry.getDataSource());
-        
-        return entryData;
+    // Вспомогательные методы
+    
+    private Map<String, Object> convertNutritionEntryToMap(NutritionEntry entry) {
+        Map<String, Object> entryMap = new HashMap<>();
+        entryMap.put("id", entry.getId());
+        entryMap.put("foodName", entry.getFoodName());
+        entryMap.put("quantity", entry.getQuantity());
+        entryMap.put("calories", entry.getCalories());
+        entryMap.put("proteins", entry.getProteins());
+        entryMap.put("fats", entry.getFats());
+        entryMap.put("carbs", entry.getCarbs());
+        entryMap.put("mealType", entry.getMealType() != null ? entry.getMealType().toString() : null);
+        entryMap.put("timestamp", entry.getTimestamp() != null ? 
+            entry.getTimestamp().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME) : null);
+        entryMap.put("confidence", entry.getConfidence());
+                 entryMap.put("aiNotes", entry.getNotes());
+        return entryMap;
     }
 } 

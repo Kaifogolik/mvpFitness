@@ -495,5 +495,46 @@ public class OpenAIService {
             return null;
         }
     }
+    
+    /**
+     * Обработка текстового запроса для LLM Router
+     */
+    public com.fitcoach.infrastructure.ai.common.AIResponse processText(String content, String context) {
+        try {
+            logger.info("🧠 OpenAI обработка текста: контекст={}, длина={}", context, content.length());
+            
+            List<ChatMessage> messages = new ArrayList<>();
+            messages.add(new ChatMessage(ChatMessageRole.SYSTEM.value(), 
+                "Ты персональный тренер по фитнесу. " + context));
+            messages.add(new ChatMessage(ChatMessageRole.USER.value(), content));
+            
+            ChatCompletionRequest request = ChatCompletionRequest.builder()
+                .model("gpt-4")
+                .messages(messages)
+                .temperature(0.7)
+                .maxTokens(500)
+                .build();
+                
+            ChatCompletionResult result = openAiService.createChatCompletion(request);
+            
+            if (result != null && !result.getChoices().isEmpty()) {
+                String responseContent = result.getChoices().get(0).getMessage().getContent();
+                int tokensUsed = Math.toIntExact(result.getUsage().getTotalTokens());
+                double cost = tokensUsed * 0.03 / 1000.0; // GPT-4 pricing
+                
+                return com.fitcoach.infrastructure.ai.common.AIResponse
+                    .success(responseContent, "openai", "gpt-4")
+                    .withUsage(tokensUsed, cost);
+            } else {
+                return com.fitcoach.infrastructure.ai.common.AIResponse
+                    .error("Пустой ответ от OpenAI", "openai");
+            }
+            
+        } catch (Exception e) {
+            logger.error("❌ Ошибка OpenAI processText: {}", e.getMessage());
+            return com.fitcoach.infrastructure.ai.common.AIResponse
+                .error("Ошибка обработки запроса: " + e.getMessage(), "openai");
+        }
+    }
 
 } 

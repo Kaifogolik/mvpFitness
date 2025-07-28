@@ -1,0 +1,46 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/fitness_app
+    driver-class-name: org.postgresql.Driver
+    username: fitness_user
+    password: fitness_pass
+    
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+    
+  redis:
+    host: localhost
+    port: 6379
+
+# Telegram Bot Configuration для production
+telegram:
+  bot:
+    token: ${TELEGRAM_BOT_TOKEN:8375716243:AAHjRBrv3aTZztFQlFf2TPr2oMmav72lU_c}
+    username: ${TELEGRAM_BOT_USERNAME:fitcoach_ai_bot}
+    webhook-url: ${TELEGRAM_WEBHOOK_URL:}
+
+# OpenAI Configuration (НАСТРОЕН С РЕАЛЬНЫМ КЛЮЧОМ!)
+openai:
+  api-key: ${OPENAI_API_KEY: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}
+  model: gpt-4o
+  max-tokens: 150
+  temperature: 0.0
+
+# App Configuration
+app:
+  mini-app:
+    url: ${MINI_APP_URL:https://yourdomain.com}
+
+logging:
+  level:
+    com.fitcoach: INFO
+    org.springframework.web: WARN
+    org.hibernate.SQL: WARN
+    org.telegram: INFO
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n" 

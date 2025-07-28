@@ -313,23 +313,111 @@ class FitCoachApp {
     
     updateDashboardStats(dailyStats, weeklyStats, recommendations) {
         // Обновляем статистику дашборда с реальными данными и анимациями
+        console.log('🔧 updateDashboardStats вызван с данными:', { dailyStats, weeklyStats, recommendations });
+        
+        // Добавляем небольшую задержку чтобы убедиться что DOM готов
+        setTimeout(() => {
+            this.processStatsUpdate(dailyStats, weeklyStats, recommendations);
+        }, 100);
+    }
+    
+    processStatsUpdate(dailyStats, weeklyStats, recommendations) {
+        console.log('🚀 Обрабатываем обновление статистики...');
+        
+        // Добавляем визуальную отладку в заголовок
+        const titleElement = document.querySelector('title');
+        if (titleElement) {
+            titleElement.textContent = '🔧 Обновляем статистику...';
+        }
+        
         if (dailyStats && dailyStats.success) {
-            // Анимированное обновление калорий
-            this.animateValue('todayCalories', 0, Math.round(dailyStats.total_calories), 1000);
-            this.animateValue('dailyGoal', 0, dailyStats.goal_calories, 800);
+            console.log('📊 Обновляем дневную статистику:', dailyStats);
             
-            // Обновляем прогресс калорий
+            // Обновляем заголовок
+            if (titleElement) {
+                titleElement.textContent = '📊 Обрабатываем дневные данные...';
+            }
+            
+            // ПРОСТОЕ ПРЯМОЕ ОБНОВЛЕНИЕ БЕЗ АНИМАЦИЙ
+            const todayCaloriesElement = document.getElementById('todayCalories');
+            const dailyGoalElement = document.getElementById('dailyGoal');
+            
+            console.log('🔍 Проверяем элементы:', { 
+                todayCalories: !!todayCaloriesElement, 
+                dailyGoal: !!dailyGoalElement 
+            });
+            
+            if (todayCaloriesElement) {
+                console.log('🔥 Анимируем калории:', Math.round(dailyStats.total_calories));
+                
+                // АГРРЕССИВНОЕ ИСПРАВЛЕНИЕ - полная перезапись
+                const caloriesValue = Math.round(dailyStats.total_calories);
+                todayCaloriesElement.innerHTML = caloriesValue;
+                todayCaloriesElement.style.color = '#FF6B6B'; // Красный для проверки
+                todayCaloriesElement.style.fontSize = '24px';
+                todayCaloriesElement.style.fontWeight = 'bold';
+                
+                // ПРИНУДИТЕЛЬНО УБИРАЕМ ВСЕ КЛАССЫ LOADING
+                todayCaloriesElement.classList.remove('loading');
+                todayCaloriesElement.style.opacity = '1';
+                
+                // Удаляем все spinner'ы
+                const spinners = todayCaloriesElement.querySelectorAll('.loading-spinner');
+                spinners.forEach(spinner => spinner.remove());
+                
+                console.log('🔥 Калории принудительно установлены:', todayCaloriesElement.textContent);
+                
+                this.animateValue('todayCalories', 0, caloriesValue, 1000);
+            } else {
+                console.error('❌ Элемент todayCalories НЕ НАЙДЕН!');
+                if (titleElement) {
+                    titleElement.textContent = '❌ Элемент todayCalories НЕ НАЙДЕН!';
+                }
+            }
+            
+            if (dailyGoalElement) {
+                console.log('🎯 Анимируем цель:', dailyStats.goal_calories);
+                
+                // АГРРЕССИВНОЕ ИСПРАВЛЕНИЕ
+                const goalValue = dailyStats.goal_calories;
+                dailyGoalElement.innerHTML = goalValue;
+                dailyGoalElement.style.color = '#4ECDC4'; // Синий для проверки
+                dailyGoalElement.style.fontSize = '24px';
+                dailyGoalElement.style.fontWeight = 'bold';
+                
+                // ПРИНУДИТЕЛЬНО УБИРАЕМ ВСЕ КЛАССЫ LOADING
+                dailyGoalElement.classList.remove('loading');
+                dailyGoalElement.style.opacity = '1';
+                
+                // Удаляем все spinner'ы
+                const spinners = dailyGoalElement.querySelectorAll('.loading-spinner');
+                spinners.forEach(spinner => spinner.remove());
+                
+                console.log('🎯 Цель принудительно установлена:', dailyGoalElement.textContent);
+                
+                this.animateValue('dailyGoal', 0, goalValue, 800);
+            } else {
+                console.error('❌ Элемент dailyGoal НЕ НАЙДЕН!');
+                if (titleElement) {
+                    titleElement.textContent = '❌ Элемент dailyGoal НЕ НАЙДЕН!';
+                }
+            }
+            
+            // Обновляем прогресс-бар калорий
             const caloriesProgress = (dailyStats.total_calories / dailyStats.goal_calories) * 100;
-            setTimeout(() => this.updateProgressBar('caloriesProgress', caloriesProgress), 500);
+            this.updateProgressBar('caloriesProgress', caloriesProgress);
             
-            // Безопасное обновление элементов (только если они существуют)
+            // Обновляем другие элементы
             const consumedElement = document.getElementById('consumedCalories');
             const remainingElement = document.getElementById('remainingCalories');
             
-            if (consumedElement) consumedElement.textContent = Math.round(dailyStats.total_calories);
-            if (remainingElement) remainingElement.textContent = Math.round(dailyStats.remaining_calories);
+            if (consumedElement) {
+                consumedElement.textContent = Math.round(dailyStats.total_calories);
+            }
+            if (remainingElement) {
+                remainingElement.textContent = Math.round(dailyStats.remaining_calories);
+            }
             
-            // Обновляем БЖУ если есть элементы
             const proteinElement = document.getElementById('todayProtein'); 
             const carbsElement = document.getElementById('todayCarbs');
             const fatElement = document.getElementById('todayFat');
@@ -340,32 +428,108 @@ class FitCoachApp {
         }
         
         if (weeklyStats && weeklyStats.success) {
-            // Обновляем только существующие элементы
-            this.animateValue('streakDays', 0, weeklyStats.days_tracked, 600);
+            console.log('📈 Обновляем недельную статистику:', weeklyStats);
             
-            // Прогресс streak (например, из 7 дней)
+            const streakElement = document.getElementById('streakDays');
+            if (streakElement) {
+                streakElement.className = 'stat-value';
+                streakElement.style.cssText = 'color: #96CEB4 !important; font-weight: bold !important;';
+                streakElement.textContent = weeklyStats.days_tracked;
+                console.log('📅 Установили streak:', streakElement.textContent);
+            } else {
+                console.error('❌ Элемент streakDays НЕ НАЙДЕН!');
+                if (titleElement) {
+                    titleElement.textContent = '❌ Элемент streakDays НЕ НАЙДЕН!';
+                }
+            }
+            
             const streakProgress = (weeklyStats.days_tracked / 7) * 100;
-            setTimeout(() => this.updateProgressBar('streakProgress', streakProgress), 800);
+            this.updateProgressBar('streakProgress', streakProgress);
             
-            // Обновляем средние калории если элемент существует
             const weeklyAvgElement = document.getElementById('weeklyAvgCalories');
             if (weeklyAvgElement) {
-                this.animateValue('weeklyAvgCalories', 0, Math.round(weeklyStats.average_daily_calories), 1200);
+                weeklyAvgElement.textContent = Math.round(weeklyStats.average_daily_calories);
             }
         }
         
-        // Показываем рекомендации если метод существует
         if (recommendations && recommendations.success && this.displayRecommendations) {
-            setTimeout(() => this.displayRecommendations(recommendations.recommendations), 1000);
+            this.displayRecommendations(recommendations.recommendations);
         }
         
-        console.log('✅ Статистика дашборда обновлена с анимациями');
+        // 🚨 ЭКСТРЕННОЕ ИСПРАВЛЕНИЕ - принудительное обновление каждую секунду
+        let attempts = 0;
+        const forceUpdate = setInterval(() => {
+            attempts++;
+            console.log(`🔄 Попытка ${attempts}/10 - принудительное обновление`);
+            
+            const caloriesEl = document.getElementById('todayCalories');
+            const goalEl = document.getElementById('dailyGoal');
+            const streakEl = document.getElementById('streakDays');
+            
+            if (caloriesEl && dailyStats && dailyStats.success) {
+                caloriesEl.textContent = Math.round(dailyStats.total_calories);
+                caloriesEl.style.color = '#FF6B6B';
+                caloriesEl.classList.remove('loading');
+                console.log(`🔥 Установили калории: ${caloriesEl.textContent}`);
+            }
+            
+            if (goalEl && dailyStats && dailyStats.success) {
+                goalEl.textContent = dailyStats.goal_calories;
+                goalEl.style.color = '#4ECDC4';
+                goalEl.classList.remove('loading');
+                console.log(`🎯 Установили цель: ${goalEl.textContent}`);
+            }
+            
+            if (streakEl && weeklyStats && weeklyStats.success) {
+                streakEl.textContent = weeklyStats.days_tracked;
+                streakEl.style.color = '#96CEB4';
+                streakEl.classList.remove('loading');
+                console.log(`📅 Установили streak: ${streakEl.textContent}`);
+            }
+            
+            if (attempts >= 10) {
+                clearInterval(forceUpdate);
+                console.log('✅ Экстренное обновление завершено');
+            }
+        }, 1000);
+        
+        // Финальный статус
+        setTimeout(() => {
+            if (titleElement) {
+                titleElement.textContent = '✅ FitCoach AI - Данные загружены!';
+            }
+            
+            // 🔍 ФИНАЛЬНАЯ ПРОВЕРКА DOM
+            console.log('🔍 ФИНАЛЬНАЯ ПРОВЕРКА ЭЛЕМЕНТОВ:');
+            const finalCalories = document.getElementById('todayCalories');
+            const finalGoal = document.getElementById('dailyGoal');  
+            const finalStreak = document.getElementById('streakDays');
+            
+            if (finalCalories) {
+                console.log('🔥 Финальные калории:', finalCalories.textContent, 'classList:', finalCalories.classList.toString());
+            }
+            if (finalGoal) {
+                console.log('🎯 Финальная цель:', finalGoal.textContent, 'classList:', finalGoal.classList.toString());
+            }
+            if (finalStreak) {
+                console.log('📅 Финальный streak:', finalStreak.textContent, 'classList:', finalStreak.classList.toString());
+            }
+        }, 2000);
+        
+        console.log('✅ Статистика дашборда обновлена БЕЗ анимаций');
     }
     
     animateValue(elementId, start, end, duration) {
         // Анимированное изменение числовых значений
+        console.log('🎬 Анимируем элемент:', elementId, 'от', start, 'до', end);
+        
         const element = document.getElementById(elementId);
-        if (!element) return;
+        if (!element) {
+            console.error('❌ Элемент не найден для анимации:', elementId);
+            return;
+        }
+        
+        console.log('✅ Элемент найден, начинаем анимацию:', elementId);
         
         const range = end - start;
         const startTime = Date.now();
@@ -383,6 +547,7 @@ class FitCoachApp {
             if (progress >= 1) {
                 clearInterval(timer);
                 element.textContent = end; // Убеждаемся что финальное значение точное
+                console.log('🏁 Анимация завершена для', elementId, 'значение:', end);
             }
         }, 16); // ~60fps
     }
