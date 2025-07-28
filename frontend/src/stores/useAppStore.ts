@@ -93,7 +93,7 @@ const initialStats: AppStats = {
 export const useAppStore = create<AppState>()(
   devtools(
     persist(
-      (set, get) => ({
+      (set) => ({
         // Initial state
         user: null,
         isAuthenticated: false,

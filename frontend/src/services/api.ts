@@ -175,7 +175,7 @@ export const nutritionApi = {
     return response.data
   },
 
-  batchSearch: async (foods: Array<{ name: string; weight?: number }>): Promise<any> => {
+  batchSearch: async (foods: Array<{ name: string; weight?: number }>): Promise<{ results: any[] }> => {
     const response = await api.post(`/api/v2/nutrition/batch-search`, { foods })
     return response.data
   },
@@ -213,7 +213,7 @@ export const visionApi = {
     return response.data
   },
 
-  validateImage: async (imageFile: File): Promise<any> => {
+  validateImage: async (imageFile: File): Promise<{ valid: boolean; message: string }> => {
     const formData = new FormData()
     formData.append('image', imageFile)
 
@@ -225,7 +225,7 @@ export const visionApi = {
     return response.data
   },
 
-  getModelInfo: async (): Promise<any> => {
+  getModelInfo: async (): Promise<{ model: string; version: string; accuracy: number }> => {
     const response = await api.get(`/api/v2/vision/model-info`)
     return response.data
   },
@@ -278,7 +278,7 @@ export const aiApi = {
     return response.data
   },
 
-  getStatistics: async (): Promise<any> => {
+  getStatistics: async (): Promise<{ requests: number; accuracy: number; uptime: string }> => {
     const response = await api.get(`/api/v2/ai/statistics`)
     return response.data
   },
