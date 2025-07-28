@@ -13,8 +13,8 @@ export type {
 } from './types';
 
 // Animation Components
-export { SplitText } from './SplitText';
-export { BlurText } from './BlurText';
-export { GlitchText } from './GlitchText';
-export { ShinyText } from './ShinyText';
-export { TextType } from './TextType'; 
+export { default as SplitText } from './SplitText';
+export { default as BlurText } from './BlurText';
+export { default as GlitchText } from './GlitchText';
+export { default as ShinyText } from './ShinyText';
+export { default as TextType } from './TextType'; 

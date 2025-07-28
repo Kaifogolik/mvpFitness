@@ -82,5 +82,5 @@ const BlurText: React.FC<BlurTextProps> = ({
   );
 };
 
-export { BlurText };
+export default BlurText;
 export type { BlurTextProps }; 

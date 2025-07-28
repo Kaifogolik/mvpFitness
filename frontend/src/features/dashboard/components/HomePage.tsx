@@ -10,7 +10,11 @@ import { Card } from '../../../shared/ui/Card'
 import { GradientCard } from '../../../shared/ui/GradientCard'
 import { NutrientBadge } from '../../../shared/ui/NutrientBadge'
 import { MotionSlideIn } from '../../../shared/ui/MotionSlideIn'
-import { SplitText, BlurText, GlitchText, ShinyText } from '../../../shared/ui/animations'
+import Background from '../../../shared/ui/Background'
+import { SplitText } from '../../../shared/ui/animations'
+import { BlurText } from '../../../shared/ui/animations'
+import { GlitchText } from '../../../shared/ui/animations'
+import { ShinyText } from '../../../shared/ui/animations'
 
 const HomePage: React.FC = () => {
   const features = [
@@ -48,95 +52,130 @@ const HomePage: React.FC = () => {
       path: '/stats',
       gradient: 'primary' as const,
       badge: 'Real-time данные',
-      stats: 'Smart insights'
+      stats: 'Полная аналитика'
     }
   ]
 
   const metrics = [
-    { value: '$3,540', label: 'Экономия в месяц', icon: Trophy },
-    { value: '320%', label: 'ROI', icon: Star },
-    { value: '10K+', label: 'Пользователей', icon: Users },
-    { value: '99.2%', label: 'Точность AI', icon: Target }
+    { value: '500K+', label: 'Продуктов в базе', icon: Apple },
+    { value: '99.2%', label: 'Точность ИИ', icon: Target },
+    { value: '24/7', label: 'Поддержка', icon: MessageCircle },
+    { value: '5 звезд', label: 'Рейтинг', icon: Star }
   ]
 
   return (
-    <div className="min-h-screen">
-      {/* Hero Section */}
-      <section className="relative py-20 px-6 text-center overflow-hidden">
-        {/* Background handled by Background component */}
-        
-        <MotionSlideIn direction="up" delay={0.1}>
-          <div className="relative z-10 max-w-4xl mx-auto">
-            <motion.div
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary-100 text-primary-700 text-sm font-medium mb-6"
-              animate={{ scale: [1, 1.05, 1] }}
-              transition={{ duration: 2, repeat: Infinity }}
-            >
-              <Sparkles className="w-4 h-4" />
-              Революция в фитнесе началась!
-            </motion.div>
-            
-            <SplitText 
+    <Background variant="fitness" animate={true} className="min-h-screen">
+      {/* Hero Section с революционными анимациями */}
+      <div className="relative pt-24 pb-16">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          {/* Главный заголовок с 3D эффектом */}
+          <motion.div
+            initial={{ opacity: 0, y: 50 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8 }}
+            className="mb-6"
+          >
+            <SplitText
               text="mvpFitness"
-              className="text-5xl md:text-7xl font-black text-gradient-primary mb-6 block"
               splitType="chars"
-              delay={0}
-              stagger={0.15}
-              duration={1.0}
-              triggerOnScroll={false}
+              enableGradient={true}
+              use3D={true}
+              bounceEffect={true}
+              className="text-6xl md:text-8xl font-black tracking-tight text-gradient-primary"
+              delay={300}
+              stagger={0.1}
             />
-            
-            <BlurText 
-              text="Премиальная AI-платформа для фитнеса с анализом фото еды и персональным тренером нового поколения"
-              className="text-xl md:text-2xl text-neutral-600 mb-8 max-w-3xl mx-auto block"
-              direction="bottom"
-              delay={2000}
-              duration={1.2}
-              triggerOnScroll={false}
-            />
-            
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button 
-                variant="primary" 
-                size="lg"
-                leftIcon={<Play className="w-5 h-5" />}
-              >
-                <GlitchText 
-                  text="Попробовать бесплатно" 
-                  enableOnHover={true}
-                  glitchIntensity="low"
-                />
-              </Button>
-              <Button 
-                variant="secondary" 
-                size="lg"
-                leftIcon={<Sparkles className="w-5 h-5" />}
-              >
-                Узнать больше
-              </Button>
-            </div>
-          </div>
-        </MotionSlideIn>
-      </section>
+          </motion.div>
 
-      {/* Metrics Section */}
-      <section className="py-16 px-6">
-        <div className="max-w-6xl mx-auto">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-16">
-            {metrics.map((metric, index) => (
-              <MotionSlideIn key={metric.label} direction="up" delay={0.2 + index * 0.1}>
-                <Card variant="glass" className="text-center p-6">
-                  <metric.icon className="w-8 h-8 mx-auto mb-3 text-primary-600" />
-                  <div className="text-3xl font-bold text-gradient-primary mb-2">
-                    {metric.value}
-                  </div>
-                  <div className="text-sm text-neutral-600">{metric.label}</div>
-                </Card>
-              </MotionSlideIn>
-            ))}
-          </div>
+          {/* Подзаголовок с blur эффектом */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 1.2, duration: 0.8 }}
+            className="mb-8"
+          >
+            <BlurText
+              text="Революционная AI-платформа для фитнеса и питания"
+              direction="bottom"
+              className="text-xl md:text-2xl text-neutral-600 dark:text-neutral-300 max-w-3xl mx-auto"
+              delay={1500}
+              duration={1}
+            />
+          </motion.div>
+
+          {/* Описание с дополнительным эффектом */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 2, duration: 0.8 }}
+            className="mb-12"
+          >
+            <BlurText
+              text="Используйте мощь искусственного интеллекта для анализа питания, персональных тренировок и достижения ваших фитнес-целей"
+              direction="top"
+              className="text-lg text-neutral-500 dark:text-neutral-400 max-w-2xl mx-auto leading-relaxed"
+              delay={2200}
+              duration={0.8}
+            />
+          </motion.div>
+
+          {/* CTA Кнопки с глитч эффектом */}
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 2.8, duration: 0.6 }}
+            className="flex flex-col sm:flex-row gap-4 justify-center mb-16"
+          >
+            <Link to="/vision">
+              <Button size="lg" className="group relative overflow-hidden bg-gradient-primary text-white hover-glow">
+                <GlitchText 
+                  text="Попробовать бесплатно"
+                  enableOnHover={true}
+                  intensity="medium"
+                  className="relative z-10"
+                />
+                <ArrowRight className="ml-2 h-5 w-5 transform group-hover:translate-x-1 transition-transform" />
+              </Button>
+            </Link>
+            
+            <Button variant="ghost" size="lg" className="group">
+              <Play className="mr-2 h-5 w-5" />
+              Смотреть демо
+            </Button>
+          </motion.div>
+
+          {/* Metrics Cards */}
+          <MotionSlideIn direction="up" delay={3.2}>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-16">
+              {metrics.map((metric, index) => (
+                <motion.div
+                  key={metric.label}
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ 
+                    delay: 3.5 + index * 0.1, 
+                    duration: 0.5,
+                    type: "spring",
+                    stiffness: 200
+                  }}
+                >
+                  <Card className="p-6 text-center glass-card hover-glow transform-gpu">
+                    <metric.icon className="h-8 w-8 mx-auto mb-3 text-primary-500" />
+                    <ShinyText
+                      text={metric.value}
+                      playOnHover={true}
+                      className="text-2xl font-bold text-gradient-primary"
+                    />
+                    <p className="text-sm text-neutral-600 dark:text-neutral-400 mt-1">
+                      {metric.label}
+                    </p>
+                  </Card>
+                </motion.div>
+              ))}
+            </div>
+          </MotionSlideIn>
         </div>
-      </section>
+      </div>
 
       {/* Features Section */}
       <section className="py-16 px-6">
@@ -224,7 +263,7 @@ const HomePage: React.FC = () => {
           </MotionSlideIn>
         </div>
       </section>
-    </div>
+    </Background>
   )
 }
 

@@ -388,3 +388,148 @@
 .animate-glitch-shadow-2 {
   animation: glitch-shadow-2 0.3s infinite;
 }
+
+/* React Bits премиальные CSS анимации */
+@layer utilities {
+  /* Gradient utilities */
+  .bg-gradient-primary {
+    background: linear-gradient(135deg, #8B5CF6 0%, #F97316 100%);
+  }
+  
+  .bg-gradient-secondary {
+    background: linear-gradient(135deg, #F97316 0%, #EAB308 100%);
+  }
+  
+  .text-gradient-primary {
+    background: linear-gradient(135deg, #8B5CF6 0%, #F97316 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  
+  .text-gradient-secondary {
+    background: linear-gradient(135deg, #F97316 0%, #EAB308 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* Shimmer effect для текста */
+  .shimmer-text {
+    background: linear-gradient(
+      110deg,
+      transparent 33%,
+      rgba(255, 255, 255, 0.8) 50%,
+      transparent 66%
+    );
+    background-size: 200% 100%;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: shimmer 2s infinite linear;
+  }
+
+  /* Glassmorphism utilities */
+  .glass-card {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+  }
+  
+  .glass-card-dark {
+    background: rgba(0, 0, 0, 0.2);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  /* Transform utilities */
+  .transform-gpu {
+    transform: translateZ(0);
+    backface-visibility: hidden;
+    perspective: 1000px;
+  }
+
+  /* Premium glow effects */
+  .glow-primary {
+    box-shadow: 0 0 20px rgba(168, 85, 247, 0.4);
+  }
+  
+  .glow-secondary {
+    box-shadow: 0 0 20px rgba(249, 115, 22, 0.4);
+  }
+
+  /* Text selection styling */
+  ::selection {
+    background: rgba(168, 85, 247, 0.3);
+  }
+  
+  ::-moz-selection {
+    background: rgba(168, 85, 247, 0.3);
+  }
+}
+
+/* Keyframes для анимаций */
+@keyframes shimmer {
+  0% {
+    background-position: -200% center;
+  }
+  100% {
+    background-position: 200% center;
+  }
+}
+
+@keyframes gradient-shift {
+  0%, 100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+/* Responsive design improvements */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Улучшенная типографика */
+.font-display {
+  font-feature-settings: 'liga', 'kern';
+  text-rendering: optimizeLegibility;
+}
+
+/* Премиальные эффекты наведения */
+.hover-glow:hover {
+  transition: all 0.3s ease;
+  filter: brightness(1.1);
+  transform: translateY(-2px);
+}
+
+/* Smooth scroll */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.1);
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg, #8B5CF6, #F97316);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(135deg, #7C3AED, #EA580C);
+}

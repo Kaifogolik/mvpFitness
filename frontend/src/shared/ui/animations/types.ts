@@ -6,53 +6,49 @@ export interface BaseAnimationProps {
   onComplete?: () => void;
 }
 
+export type AnimationDirection = 'top' | 'bottom' | 'left' | 'right';
+export type SplitType = 'chars' | 'words' | 'lines';
+export type GlitchIntensity = 'low' | 'medium' | 'high';
+export type ShimmerDirection = 'left' | 'right' | 'top' | 'bottom';
+
 export interface SplitTextProps extends BaseAnimationProps {
-  splitType?: 'chars' | 'words' | 'lines';
-  ease?: string;
-  threshold?: number;
+  splitType?: SplitType;
   stagger?: number;
   triggerOnScroll?: boolean;
+  enableGradient?: boolean;
+  use3D?: boolean;
+  bounceEffect?: boolean;
 }
 
 export interface BlurTextProps extends BaseAnimationProps {
-  direction?: 'top' | 'bottom' | 'left' | 'right';
+  direction?: AnimationDirection;
   distance?: number;
   blur?: number;
   triggerOnScroll?: boolean;
 }
 
 export interface GlitchTextProps extends BaseAnimationProps {
+  intensity?: GlitchIntensity;
+  colors?: string[];
   enableOnHover?: boolean;
-  glitchIntensity?: 'low' | 'medium' | 'high';
-  colors?: {
-    primary: string;
-    secondary: string;
-  };
   autoPlay?: boolean;
-  playDuration?: number;
+  speed?: number;
 }
 
 export interface ShinyTextProps extends BaseAnimationProps {
-  speed?: number;
-  direction?: 'left-to-right' | 'right-to-left';
-  shimmerWidth?: number;
-  color?: string;
-  autoPlay?: boolean;
+  shimmerDirection?: ShimmerDirection;
+  shimmerWidth?: string;
+  shimmerColor?: string;
   playOnHover?: boolean;
+  autoPlay?: boolean;
+  speed?: number;
 }
 
 export interface TextTypeProps extends BaseAnimationProps {
-  texts?: string[];
   typeSpeed?: number;
   deleteSpeed?: number;
-  pauseBetween?: number;
   loop?: boolean;
   showCursor?: boolean;
   cursorChar?: string;
-  cursorBlink?: boolean;
-}
-
-export type AnimationDirection = 'top' | 'bottom' | 'left' | 'right';
-export type SplitType = 'chars' | 'words' | 'lines';
-export type GlitchIntensity = 'low' | 'medium' | 'high';
-export type ShimmerDirection = 'left-to-right' | 'right-to-left'; 
+  words?: string[];
+} 

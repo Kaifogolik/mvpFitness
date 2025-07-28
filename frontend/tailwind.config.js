@@ -124,6 +124,14 @@ export default {
         'gradient-y': 'gradient-y 3s ease infinite',
         'gradient-xy': 'gradient-xy 3s ease infinite',
         'blob': 'blob 7s infinite',
+        // ReactBits премиальные анимации
+        'text-shimmer': 'text-shimmer 2s linear infinite',
+        'orb-float': 'orb-float 6s ease-in-out infinite',
+        'gradient-shift': 'gradient-shift 3s ease infinite',
+        'sparkle': 'sparkle 1.5s ease-in-out infinite',
+        'pulse-glow': 'pulse-glow 2s ease-in-out infinite',
+        'morph': 'morph 8s ease-in-out infinite',
+        'drift': 'drift 20s linear infinite',
       },
       keyframes: {
         'fade-in': {
@@ -177,6 +185,34 @@ export default {
           '33%': { transform: 'translate(30px, -50px) scale(1.1)' },
           '66%': { transform: 'translate(-20px, 20px) scale(0.9)' },
           '100%': { transform: 'translate(0px, 0px) scale(1)' },
+        },
+        // ReactBits премиальные keyframes
+        'text-shimmer': {
+          '0%': { backgroundPosition: '-200% center' },
+          '100%': { backgroundPosition: '200% center' },
+        },
+        'orb-float': {
+          '0%, 100%': { transform: 'translateY(0px) rotate(0deg)' },
+          '50%': { transform: 'translateY(-20px) rotate(180deg)' },
+        },
+        'sparkle': {
+          '0%, 100%': { opacity: 0, transform: 'scale(0)' },
+          '50%': { opacity: 1, transform: 'scale(1)' },
+        },
+        'pulse-glow': {
+          '0%, 100%': { boxShadow: '0 0 20px rgba(168, 85, 247, 0.3)' },
+          '50%': { boxShadow: '0 0 40px rgba(168, 85, 247, 0.8)' },
+        },
+        'morph': {
+          '0%': { borderRadius: '30% 70% 70% 30% / 30% 30% 70% 70%' },
+          '25%': { borderRadius: '70% 30% 50% 50% / 50% 70% 30% 50%' },
+          '50%': { borderRadius: '50% 50% 30% 70% / 70% 50% 50% 30%' },
+          '75%': { borderRadius: '30% 70% 70% 30% / 50% 30% 70% 50%' },
+          '100%': { borderRadius: '30% 70% 70% 30% / 30% 30% 70% 70%' },
+        },
+        'drift': {
+          '0%': { transform: 'rotate(0deg) translateX(100px) rotate(0deg)' },
+          '100%': { transform: 'rotate(360deg) translateX(100px) rotate(-360deg)' },
         },
       },
       backgroundImage: {

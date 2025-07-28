@@ -1,106 +1,87 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { cn } from '../../utils/cn';
 import type { TextTypeProps } from './types';
 
 const TextType: React.FC<TextTypeProps> = ({
   text,
-  texts = [text],
   className,
+  words = [text],
   typeSpeed = 100,
   deleteSpeed = 50,
-  pauseBetween = 2000,
   loop = true,
   showCursor = true,
   cursorChar = '|',
-  cursorBlink = true,
+  delay = 0,
+  duration = 2,
   onComplete,
   ...props
 }) => {
   const [displayText, setDisplayText] = useState('');
-  const [currentTextIndex, setCurrentTextIndex] = useState(0);
-  const [isTyping, setIsTyping] = useState(true);
+  const [textIndex, setTextIndex] = useState(0);
+  const [charIndex, setCharIndex] = useState(0);
   const [isDeleting, setIsDeleting] = useState(false);
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const [showCursorState, setShowCursorState] = useState(true);
 
   useEffect(() => {
-    const currentText = texts[currentTextIndex] || '';
-    
-    const type = () => {
-      if (isDeleting) {
-        // Удаляем символы
-        if (displayText.length > 0) {
-          setDisplayText(prev => prev.slice(0, -1));
-          timeoutRef.current = setTimeout(type, deleteSpeed);
+    const timer = setTimeout(() => {
+      if (words.length === 0) return;
+
+      const type = () => {
+        const fullText = words[textIndex] || '';
+
+        if (!isDeleting) {
+          if (charIndex < fullText.length) {
+            setDisplayText(fullText.substring(0, charIndex + 1));
+            setCharIndex(charIndex + 1);
+          } else {
+            setTimeout(() => setIsDeleting(true), 1000);
+          }
         } else {
-          // Переходим к следующему тексту
-          setIsDeleting(false);
-          setCurrentTextIndex(prev => {
-            const nextIndex = (prev + 1) % texts.length;
-            if (nextIndex === 0 && !loop) {
-              setIsTyping(false);
+          if (charIndex > 0) {
+            setDisplayText(fullText.substring(0, charIndex - 1));
+            setCharIndex(charIndex - 1);
+          } else {
+            setIsDeleting(false);
+            setTextIndex((prev) => (prev + 1) % words.length);
+            if (!loop && textIndex === words.length - 1) {
               if (onComplete) onComplete();
-              return prev;
+              return;
             }
-            return nextIndex;
-          });
-        }
-      } else {
-        // Добавляем символы
-        if (displayText.length < currentText.length) {
-          setDisplayText(prev => currentText.slice(0, prev.length + 1));
-          timeoutRef.current = setTimeout(type, typeSpeed);
-        } else {
-          // Пауза перед удалением (если есть несколько текстов)
-          if (texts.length > 1) {
-            timeoutRef.current = setTimeout(() => {
-              setIsDeleting(true);
-              type();
-            }, pauseBetween);
-          } else if (!loop) {
-            setIsTyping(false);
-            if (onComplete) onComplete();
           }
         }
-      }
-    };
+      };
 
-    if (isTyping) {
-      timeoutRef.current = setTimeout(type, typeSpeed);
+      type();
+    }, delay);
+
+    return () => clearTimeout(timer);
+  }, [charIndex, isDeleting, textIndex, words, typeSpeed, deleteSpeed, loop, delay, onComplete]);
+
+  useEffect(() => {
+    if (showCursor) {
+      const cursorTimer = setInterval(() => {
+        setShowCursorState(prev => !prev);
+      }, 500);
+      return () => clearInterval(cursorTimer);
     }
+  }, [showCursor]);
 
-    return () => {
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
-      }
-    };
-  }, [
-    displayText,
-    currentTextIndex,
-    texts,
-    typeSpeed,
-    deleteSpeed,
-    pauseBetween,
-    loop,
-    isTyping,
-    isDeleting,
-    onComplete
-  ]);
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      // Start typing
+    }, delay);
+    return () => clearTimeout(timer);
+  }, [delay]);
 
   return (
-    <span
-      className={cn('inline-block', className)}
-      {...props}
-    >
-      <span>{displayText}</span>
+    <span className={cn('inline-block', className)} {...props}>
+      {displayText}
       {showCursor && (
         <span
           className={cn(
-            'ml-1',
-            cursorBlink && 'animate-pulse'
+            'inline-block ml-1',
+            showCursorState ? 'opacity-100' : 'opacity-0'
           )}
-          style={{
-            animationDuration: '1s',
-          }}
         >
           {cursorChar}
         </span>
@@ -109,5 +90,5 @@ const TextType: React.FC<TextTypeProps> = ({
   );
 };
 
-export { TextType };
+export default TextType;
 export type { TextTypeProps }; 
