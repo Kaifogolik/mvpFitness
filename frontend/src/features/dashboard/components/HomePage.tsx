@@ -10,6 +10,7 @@ import { Card } from '../../../shared/ui/Card'
 import { GradientCard } from '../../../shared/ui/GradientCard'
 import { NutrientBadge } from '../../../shared/ui/NutrientBadge'
 import { MotionSlideIn } from '../../../shared/ui/MotionSlideIn'
+import { SplitText, BlurText, GlitchText, ShinyText } from '../../../shared/ui/animations'
 
 const HomePage: React.FC = () => {
   const features = [
@@ -75,14 +76,22 @@ const HomePage: React.FC = () => {
               Революция в фитнесе началась!
             </motion.div>
             
-            <h1 className="text-5xl md:text-7xl font-black text-gradient-primary mb-6">
-              mvpFitness
-            </h1>
+            <SplitText 
+              text="mvpFitness"
+              className="text-5xl md:text-7xl font-black text-gradient-primary mb-6 block"
+              splitType="chars"
+              delay={300}
+              stagger={0.08}
+              duration={0.6}
+            />
             
-            <p className="text-xl md:text-2xl text-neutral-600 mb-8 max-w-3xl mx-auto">
-              <strong>Премиальная AI-платформа</strong> для фитнеса с анализом фото еды 
-              и персональным тренером нового поколения
-            </p>
+            <BlurText 
+              text="Премиальная AI-платформа для фитнеса с анализом фото еды и персональным тренером нового поколения"
+              className="text-xl md:text-2xl text-neutral-600 mb-8 max-w-3xl mx-auto block"
+              direction="bottom"
+              delay={800}
+              duration={0.8}
+            />
             
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button 
@@ -90,7 +99,11 @@ const HomePage: React.FC = () => {
                 size="lg"
                 leftIcon={<Play className="w-5 h-5" />}
               >
-                Попробовать бесплатно
+                <GlitchText 
+                  text="Попробовать бесплатно" 
+                  enableOnHover={true}
+                  glitchIntensity="low"
+                />
               </Button>
               <Button 
                 variant="secondary" 
@@ -154,7 +167,12 @@ const HomePage: React.FC = () => {
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-3">
                           <h3 className="text-2xl font-bold text-white">
-                            {feature.title}
+                            <ShinyText 
+                              text={feature.title}
+                              speed={4}
+                              playOnHover={true}
+                              autoPlay={false}
+                            />
                           </h3>
                           <span className="px-2 py-1 bg-white/20 rounded-full text-xs font-medium">
                             {feature.badge}
